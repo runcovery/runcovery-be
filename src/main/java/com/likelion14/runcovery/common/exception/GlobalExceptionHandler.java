@@ -1,6 +1,7 @@
 package com.likelion14.runcovery.common.exception;
 
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.exception.BodyPartNotFoundException;
 import com.likelion14.runcovery.exception.UserNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +15,12 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException e) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.fail(e.getMessage()));
+    }
+
+    @ExceptionHandler(BodyPartNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleBodyPartNotFound(BodyPartNotFoundException e) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.fail(e.getMessage()));
     }
