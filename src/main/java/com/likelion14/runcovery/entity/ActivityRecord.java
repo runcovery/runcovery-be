@@ -23,6 +23,7 @@ public class ActivityRecord {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
+
     @Column(nullable = false)
     private Integer runningDuration;
 
@@ -53,9 +54,15 @@ public class ActivityRecord {
     @Column(nullable = false)
     private LocalDateTime endTime;
 
+    @Column
+    private Double lat;
+
+    @Column
+    private Double lon;
+
     public ActivityRecord(User user, Integer runningDuration, LocalDate recordDate, Integer distanceM,
                            Integer avgPace, Integer avgHeartRate, Integer maxHeartRate, Integer calories,
-                           Integer cadence, LocalDateTime startTime, LocalDateTime endTime) {
+                           Integer cadence, LocalDateTime startTime, LocalDateTime endTime, Double lat, Double lon) {
         this.user = user;
         this.runningDuration = runningDuration;
         this.recordDate = recordDate;
@@ -67,11 +74,13 @@ public class ActivityRecord {
         this.cadence = cadence;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.lat = lat;
+        this.lon = lon;
     }
 
     public void update(Integer runningDuration, LocalDate recordDate, Integer distanceM, Integer avgPace,
                         Integer avgHeartRate, Integer maxHeartRate, Integer calories, Integer cadence,
-                        LocalDateTime startTime, LocalDateTime endTime) {
+                        LocalDateTime startTime, LocalDateTime endTime, Double lat, Double lon) {
         this.runningDuration = runningDuration;
         this.recordDate = recordDate;
         this.distanceM = distanceM;
@@ -82,5 +91,7 @@ public class ActivityRecord {
         this.cadence = cadence;
         this.startTime = startTime;
         this.endTime = endTime;
+        this.lat = lat;
+        this.lon = lon;
     }
 }
