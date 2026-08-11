@@ -1,8 +1,12 @@
 package com.likelion14.runcovery.activity;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
+import com.likelion14.runcovery.user.User;
 
-@Repository
+import java.time.LocalDate;
+import java.util.Optional;
+
+
 public interface ActivityRecordRepository extends JpaRepository<ActivityRecord, Long> {
+    Optional<ActivityRecord> findByUserAndRecordDate(User user, LocalDate recordDate);
 }
