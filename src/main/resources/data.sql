@@ -3,8 +3,6 @@ INSERT INTO users (user_id, nickname, age, gender, height, weight, running_exper
 
 INSERT INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('B_NECK', '뒷목', NULL, 'BACK'),
-('B_UPPER_BACK_L', '등 상부', 'LEFT', 'BACK'),
-('B_UPPER_BACK_R', '등 상부', 'RIGHT', 'BACK'),
 ('B_MID_BACK_L', '등 중부', 'LEFT', 'BACK'),
 ('B_MID_BACK_R', '등 중부', 'RIGHT', 'BACK'),
 ('B_LOWER_BACK_L', '허리', 'LEFT', 'BACK'),
@@ -13,8 +11,6 @@ INSERT INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('B_SHOULDER_R', '어깨', 'RIGHT', 'BACK'),
 ('B_UPPER_ARM_L', '위팔(삼두)', 'LEFT', 'BACK'),
 ('B_UPPER_ARM_R', '위팔(삼두)', 'RIGHT', 'BACK'),
-('B_LOWER_ARM_L', '아래팔', 'LEFT', 'BACK'),
-('B_LOWER_ARM_R', '아래팔', 'RIGHT', 'BACK'),
 ('B_GLUTES_L', '엉덩이', 'LEFT', 'BACK'),
 ('B_GLUTES_R', '엉덩이', 'RIGHT', 'BACK'),
 ('B_THIGH_L', '허벅지 뒤', 'LEFT', 'BACK'),
@@ -33,8 +29,6 @@ INSERT INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('F_OBLIQUE_R', '옆구리', 'RIGHT', 'FRONT'),
 ('F_UPPER_ARM_L', '위팔(이두)', 'LEFT', 'FRONT'),
 ('F_UPPER_ARM_R', '위팔(이두)', 'RIGHT', 'FRONT'),
-('F_LOWER_ARM_L', '아래팔', 'LEFT', 'FRONT'),
-('F_LOWER_ARM_R', '아래팔', 'RIGHT', 'FRONT'),
 ('F_PELVIS_L', '서혜부/골반', 'LEFT', 'FRONT'),
 ('F_PELVIS_R', '서혜부/골반', 'RIGHT', 'FRONT'),
 ('F_THIGH_L', '허벅지 앞', 'LEFT', 'FRONT'),
@@ -42,7 +36,14 @@ INSERT INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('F_KNEE_L', '무릎 앞', 'LEFT', 'FRONT'),
 ('F_KNEE_R', '무릎 앞', 'RIGHT', 'FRONT'),
 ('F_SHIN_L', '정강이', 'LEFT', 'FRONT'),
-('F_SHIN_R', '정강이', 'RIGHT', 'FRONT');
+('F_SHIN_R', '정강이', 'RIGHT', 'FRONT'),
+('UPPER_BACK_L', '등 상부', 'LEFT', NULL),
+('UPPER_BACK_R', '등 상부', 'RIGHT', NULL),
+('HEAD', '머리', NULL, NULL),
+('FOOT_L', '발', 'LEFT', NULL),
+('FOOT_R', '발', 'RIGHT', NULL),
+('LOWER_ARM_L', '아래팔', 'LEFT', NULL),
+('LOWER_ARM_R', '아래팔', 'RIGHT', NULL);
 
 INSERT INTO future_goal (future_id, user_id, scene, target_distance, target_period, weekly_frequency, available_time, achievement_rate) VALUES
 (1, 1, '계단을 올라도 숨이 차지 않는 나', 5, 3, 2, 15, 0);
