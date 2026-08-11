@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class WeatherResponseDto {
+    private Boolean isCurrent; // 현재, 과거
     private Double lat;
     private Double lon;
     private Double temp;
