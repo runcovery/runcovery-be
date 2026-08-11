@@ -1,40 +1,41 @@
 package com.likelion14.runcovery.common.exception;
 
 import com.likelion14.runcovery.common.ApiResponse;
-import com.likelion14.runcovery.exception.BodyPartNotFoundException;
-import com.likelion14.runcovery.exception.UserNotFoundException;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(e.getMessage()));
+    // 커스텀 예외
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ApiResponse<Void>> handleCustomException(CustomException e) {
+        return ResponseEntity
+                .status(e.getStatus())
+                .body(ApiResponse.fail(e.getStatus().value(), e.getMessage()));
     }
 
-    @ExceptionHandler(BodyPartNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleBodyPartNotFound(BodyPartNotFoundException e) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ApiResponse.fail(e.getMessage()));
-    }
-
+    // 유효성 검사 실패
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Void>> handleValidation(MethodArgumentNotValidException e) {
+    public ResponseEntity<ApiResponse<Void>> handleValidException(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldError().getDefaultMessage();
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail(message));
+        return ResponseEntity.badRequest().body(ApiResponse.fail(400, message));
     }
 
-    @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiResponse<Void>> handleNotReadable(HttpMessageNotReadableException e) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.fail("요청 형식이 올바르지 않습니다"));
+    // 파라미터가 없는 경우
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<ApiResponse<Void>> handleMissingParam(MissingServletRequestParameterException e) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.fail(400, "필수 파라미터가 없습니다: " + e.getParameterName()));
+    }
+
+    // 전체 예외
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiResponse<Void>> handleException(Exception e) {
+        return ResponseEntity.internalServerError()
+                .body(ApiResponse.fail(500, e.getMessage()));
     }
 }
