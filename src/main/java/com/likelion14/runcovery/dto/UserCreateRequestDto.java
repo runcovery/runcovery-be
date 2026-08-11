@@ -1,0 +1,37 @@
+package com.likelion14.runcovery.dto;
+
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.math.BigDecimal;
+
+@Getter
+@NoArgsConstructor
+public class UserCreateRequestDto {
+
+    @NotBlank(message = "닉네임은 필수입니다")
+    private String nickname;
+
+    @NotNull(message = "나이는 필수입니다")
+    private Integer age;
+
+    @NotBlank(message = "성별은 필수입니다")
+    private String gender;
+
+    @NotNull(message = "키는 필수입니다")
+    private BigDecimal height;
+
+    @NotNull(message = "몸무게는 필수입니다")
+    private BigDecimal weight;
+
+    @NotBlank(message = "러닝 경험은 필수입니다")
+    private String runningExperience;
+
+    @NotNull(message = "최대 러닝 지속 시간은 필수입니다")
+    private Integer maxRunDuration;
+
+    @NotNull(message = "평균 수면 시간은 필수입니다")
+    private BigDecimal avgSleepHours;
+}
