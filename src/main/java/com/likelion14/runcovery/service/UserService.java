@@ -1,12 +1,13 @@
 package com.likelion14.runcovery.service;
 
+import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.dto.UserCreateRequestDto;
 import com.likelion14.runcovery.dto.UserCreateResponseDto;
 import com.likelion14.runcovery.dto.UserResponseDto;
 import com.likelion14.runcovery.entity.User;
-import com.likelion14.runcovery.exception.UserNotFoundException;
 import com.likelion14.runcovery.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -32,7 +33,7 @@ public class UserService {
 
     public UserResponseDto getMyInfo(Long userId) {
         User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
         return new UserResponseDto(user);
     }
 }

@@ -1,5 +1,6 @@
 package com.likelion14.runcovery.service;
 
+import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.dto.BodyIssueListResponseDto;
 import com.likelion14.runcovery.dto.BodyIssueSaveRequestDto;
 import com.likelion14.runcovery.dto.BodyIssueSaveResponseDto;
@@ -8,12 +9,11 @@ import com.likelion14.runcovery.entity.BodyIssue;
 import com.likelion14.runcovery.entity.BodyIssueId;
 import com.likelion14.runcovery.entity.BodyPart;
 import com.likelion14.runcovery.entity.User;
-import com.likelion14.runcovery.exception.BodyPartNotFoundException;
-import com.likelion14.runcovery.exception.UserNotFoundException;
 import com.likelion14.runcovery.repository.BodyIssueRepository;
 import com.likelion14.runcovery.repository.BodyPartRepository;
 import com.likelion14.runcovery.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +29,7 @@ public class BodyIssueService {
 
     public BodyIssueListResponseDto getBodyIssues(Long userId) {
         userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
 
         List<PainAreaDto> painAreas = bodyIssueRepository.findAllByUser_IdAndIsPainfulTrue(userId).stream()
                 .map(PainAreaDto::new)
@@ -40,7 +40,7 @@ public class BodyIssueService {
     @Transactional
     public BodyIssueSaveResponseDto saveBodyIssues(Long userId, BodyIssueSaveRequestDto request) {
         User user = userRepository.findById(userId)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
 
         int updatedCount = 0;
         for (PainAreaDto painArea : request.getPainAreas()) {
@@ -49,7 +49,7 @@ public class BodyIssueService {
 
             if (existing == null) {
                 BodyPart bodyPart = bodyPartRepository.findById(painArea.getBodyPartCode())
-                        .orElseThrow(BodyPartNotFoundException::new);
+                        .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 신체 부위가 존재하지 않습니다"));
                 bodyIssueRepository.save(new BodyIssue(user, bodyPart, painArea.getIsPainful()));
                 updatedCount++;
             } else if (!existing.getIsPainful().equals(painArea.getIsPainful())) {
