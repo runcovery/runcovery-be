@@ -10,11 +10,12 @@ import java.time.LocalDateTime;
 @Getter
 @NoArgsConstructor
 public class ActivityRequestDto {
-    @NotNull(message = "기록일은 필수입니다")
-    private LocalDate recordDate;
 
     @NotNull(message = "러닝시간(sec)는 필수입니다")
     private Integer runningDuration;
+
+    @NotNull(message = "기록일은 필수입니다")
+    private LocalDate recordDate;
 
     @NotNull(message = "러닝거리(m)는 필수입니다")
     private Integer distanceM;
@@ -45,4 +46,5 @@ public class ActivityRequestDto {
 
     @NotNull(message = "경도는 필수입니다")
     private Double lon;
+
 }

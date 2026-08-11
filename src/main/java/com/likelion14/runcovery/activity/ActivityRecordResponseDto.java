@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ActivityRecordResponseDto {
     private Long recordId;
-    private LocalDate recordDate;
     private Integer runningDuration;
+    private LocalDate recordDate;
     private Integer distanceM;
     private Integer avgPace;
     private Integer avgHeartRate;

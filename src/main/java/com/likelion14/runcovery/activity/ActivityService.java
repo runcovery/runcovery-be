@@ -20,6 +20,7 @@ public class ActivityService {
     private final UserRepository userRepository;
     private final MissionRepository missionRepository;
 
+    // 활동 데이터 동기화 (저장/업데이트) 및 미션 완료 처리
     @Transactional
     public ActivitySyncResponseDto syncActivity(ActivityRequestDto request) {
         User user = userRepository.findById(1L)
@@ -38,11 +39,36 @@ public class ActivityService {
         return new ActivitySyncResponseDto(activityRecord.getId(), missionInfo);
     }
 
+    // 오늘 날짜 기준 활동 기록 조회
+    public ActivityRecordResponseDto getTodayActivity() {
+        LocalDate today = LocalDate.now();
+        User user = userRepository.findById(1L)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
+
+        return activityRecordRepository.findByUserAndRecordDate(user, today)
+                .map(record -> new ActivityRecordResponseDto(
+                        record.getId(),
+                        record.getRunningDuration(),
+                        record.getRecordDate(),
+                        record.getDistanceM(),
+                        record.getAvgPace(),
+                        record.getAvgHeartRate(),
+                        record.getMaxHeartRate(),
+                        record.getCalories(),
+                        record.getCadence(),
+                        record.getStartTime(),
+                        record.getEndTime()
+                ))
+                .orElse(null);
+    }
+
+    // 운동 기록 단건 조회
     public ActivityRecord getActivityRecord(long recordId) {
         return activityRecordRepository.findById(recordId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "일치하는 운동기록이 없습니다."));
     }
 
+    // recordDate 기준 저장 또는 업데이트
     private ActivityRecord saveOrUpdateActivity(User user, ActivityRequestDto request) {
         return activityRecordRepository.findByUserAndRecordDate(user, request.getRecordDate())
                 .map(existing -> {
@@ -77,27 +103,5 @@ public class ActivityService {
                                 request.getLat(),
                                 request.getLon()
                 )));
-    }
-
-    public ActivityRecordResponseDto getTodayActivity() {
-        LocalDate today = LocalDate.now();
-        User user = userRepository.findById(1L)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
-
-        return activityRecordRepository.findByUserAndRecordDate(user, today)
-                .map(record -> new ActivityRecordResponseDto(
-                        record.getId(),
-                        record.getRecordDate(),
-                        record.getRunningDuration(),
-                        record.getDistanceM(),
-                        record.getAvgPace(),
-                        record.getAvgHeartRate(),
-                        record.getMaxHeartRate(),
-                        record.getCalories(),
-                        record.getCadence(),
-                        record.getStartTime(),
-                        record.getEndTime()
-                ))
-                .orElse(null);
     }
 }
