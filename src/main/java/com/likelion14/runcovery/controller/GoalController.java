@@ -1,11 +1,21 @@
 package com.likelion14.runcovery.controller;
 
+import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.dto.ScenesResponseDto;
+import com.likelion14.runcovery.service.GoalService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/goals")
 @RequiredArgsConstructor
 public class GoalController {
+
+    private final GoalService goalService;
+
+    // 프로필 기반 미래 장면 추천
+    @PostMapping("/future/scenes/recommend/profile")
+    public ApiResponse<ScenesResponseDto> recommendScenesByProfile(@RequestHeader("X-User-Id") Long userId) {
+        return ApiResponse.ok(goalService.recommendScenesByProfile(userId));
+    }
 }
