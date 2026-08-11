@@ -27,6 +27,11 @@ public class ApiResponse<T> {
         return new ApiResponse<>(HttpStatus.OK.value(), true, data, message);
     }
 
+    // 성공 + 데이터 + 상태코드 (200이 아닌 성공 응답, 예: 201 Created)
+    public static <T> ApiResponse<T> ok(T data, HttpStatus status) {
+        return new ApiResponse<>(status.value(), true, data, null);
+    }
+
     // 실패
     public static <T> ApiResponse<T> fail(int code, String message) {
         return new ApiResponse<>(code, false, null, message);

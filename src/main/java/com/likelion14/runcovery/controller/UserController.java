@@ -25,7 +25,7 @@ public class UserController {
     ) {
         UserCreateResponseDto response = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.ok(response));
+                .body(ApiResponse.ok(response, HttpStatus.CREATED));
     }
 
     // 유저 조회
