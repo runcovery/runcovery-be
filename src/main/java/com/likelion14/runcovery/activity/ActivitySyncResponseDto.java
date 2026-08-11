@@ -14,7 +14,9 @@ public class ActivitySyncResponseDto {
     private long recordId;
     private MissionInfo mission;
 
-
+    @Getter
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class MissionInfo {
         private Long missionId;
         private Boolean isCompleted;

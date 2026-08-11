@@ -1,6 +1,8 @@
 package com.likelion14.runcovery.activity;
 
 import com.likelion14.runcovery.common.exception.CustomException;
+import com.likelion14.runcovery.mission.MissionRepository;
+import com.likelion14.runcovery.mission.TodayMission;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
 import jakarta.transaction.Transactional;
@@ -16,6 +18,7 @@ public class ActivityService {
 
     private final ActivityRecordRepository activityRecordRepository;
     private final UserRepository userRepository;
+    private final MissionRepository missionRepository;
 
     @Transactional
     public ActivitySyncResponseDto syncActivity(ActivityRequestDto request) {
@@ -24,9 +27,15 @@ public class ActivityService {
 
         ActivityRecord activityRecord = saveOrUpdateActivity(user, request);
 
-        // 미션 완료여부 업데이트
+        TodayMission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
 
-        return new ActivitySyncResponseDto(activityRecord.getId(),null);
+        ActivitySyncResponseDto.MissionInfo missionInfo = null;
+        if (mission != null) {
+            mission.complete();
+            missionInfo = new ActivitySyncResponseDto.MissionInfo(mission.getId(), true);
+        }
+
+        return new ActivitySyncResponseDto(activityRecord.getId(), missionInfo);
     }
 
     public ActivityRecord getActivityRecord(long recordId) {

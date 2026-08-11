@@ -72,4 +72,8 @@ public class TodayMission {
         this.recommendedZoneDesc = recommendedZoneDesc;
         this.detailComment = detailComment;
     }
+
+    public void complete() {
+        this.isCompleted = true;
+    }
 }
