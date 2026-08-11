@@ -1,11 +1,10 @@
 package com.likelion14.runcovery.service;
 
 import com.likelion14.runcovery.dto.WeatherResponseDto;
+import com.likelion14.runcovery.entity.ActivityRecord;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
-import java.time.LocalDateTime;
 
 @Slf4j
 @Service
@@ -15,11 +14,10 @@ public class WellnessService {
     private final WeatherService weatherService;
 
     // 과거 날씨 조회 메서드
-    private WeatherResponseDto getPastWeatherByRecord(long recordId, double lat, double lon) {
-
-        LocalDateTime startTime = activityService.getActivityStartTime(recordId);
-        log.info("시간 : {}", startTime);
-        return weatherService.getPastWeather(startTime, lat, lon);
-
+    public WeatherResponseDto getPastWeatherByRecord() {
+        long recordId = 1; // 나중에 매개변수로 받아와야 함
+        ActivityRecord record = activityService.getActivityRecord(recordId);
+        log.info("운동 시작 시간 : {}", record.getStartTime());
+        return weatherService.getPastWeather(record.getStartTime(), record.getLat(), record.getLon());
     }
 }
