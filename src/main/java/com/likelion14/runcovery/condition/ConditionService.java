@@ -71,7 +71,7 @@ public class ConditionService {
 
         // 5. 분석 결과 저장
         try {
-            condition.updateAnalysis(result.getConditionTitle(), objectMapper.writeValueAsString(result.getConditionItems()));
+            condition.updateAnalysis(result.getConditionTitle(), objectMapper.writeValueAsString(result.getConditionFeedback()));
         } catch (JsonProcessingException e) {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "컨디션 피드백 변환에 실패했습니다.");
         }
@@ -79,7 +79,7 @@ public class ConditionService {
         conditionRepository.save(condition);
 
         // 6. 분석 결과 반환
-        return new ConditionResponseDto(condition.getConditionDate(), result.getConditionTitle(), result.getConditionItems());
+        return new ConditionResponseDto(condition.getConditionDate(), result.getConditionTitle(), result.getConditionFeedback());
     }
 
     public ConditionResponseDto getLatestCondition() {
@@ -105,7 +105,8 @@ public class ConditionService {
             사용자의 컨디션 정보를 분석하여 오늘의 컨디션을 요약해주세요.
             반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
             통증 부위 관련 문장은 "계속", "항상", "만성" 등 지속성을 암시하는 표현을 사용하지 마세요.
-            오늘의 상태만 표현해주세요.
+            "완전히", "절대", "항상" 등 극단적이고 단정적인 표현은 사용하지 마세요.
+            오늘의 상태만 부드럽게 표현해주세요.
             {
               "conditionTitle": "오늘 컨디션을 한 줄로 표현 (예: 최고의 컨디션이에요!)",
               "conditionItems": [
