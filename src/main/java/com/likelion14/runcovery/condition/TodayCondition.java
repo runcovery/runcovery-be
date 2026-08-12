@@ -27,30 +27,33 @@ public class TodayCondition {
     @Column(nullable = false)
     private LocalDate conditionDate;
 
-    @Column(nullable = false, precision = 4, scale = 2)
-    private BigDecimal sleepHours;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SleepQuality sleepQuality;
 
     @Column(nullable = false)
-    private String bodyCondition;
+    @Enumerated(EnumType.STRING)
+    private BodyCondition bodyCondition;
 
-    @Column(nullable = false)
-    private Integer activeCalories;
+    // 기존 활동기록과 미션 수행여부로 변경
+//    @Column(nullable = false)
+//    private Integer activeCalories;
 
     private Boolean isChecked = false;
 
-    public TodayCondition(User user, LocalDate conditionDate, BigDecimal sleepHours,
-                           String bodyCondition, Integer activeCalories) {
+    public TodayCondition(User user, LocalDate conditionDate, SleepQuality sleepQuality,
+                          BodyCondition bodyCondition) {
         this.user = user;
         this.conditionDate = conditionDate;
-        this.sleepHours = sleepHours;
+        this.sleepQuality = sleepQuality;
         this.bodyCondition = bodyCondition;
-        this.activeCalories = activeCalories;
+        //this.activeCalories = activeCalories;
     }
 
-    public void update(LocalDate conditionDate, BigDecimal sleepHours, String bodyCondition, Integer activeCalories) {
+    public void update(LocalDate conditionDate, SleepQuality sleepQuality, BodyCondition bodyCondition) {
         this.conditionDate = conditionDate;
-        this.sleepHours = sleepHours;
+        this.sleepQuality = sleepQuality;
         this.bodyCondition = bodyCondition;
-        this.activeCalories = activeCalories;
+        //this.activeCalories = activeCalories;
     }
 }
