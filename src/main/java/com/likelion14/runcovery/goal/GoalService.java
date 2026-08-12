@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 public class GoalService {
 
     private final UserRepository userRepository;
+    private final FutureGoalRepository futureGoalRepository;
     private final OpenAiService openAiService;
 
     public ScenesResponseDto recommendScenesByProfile(Long userId) {
@@ -43,6 +44,27 @@ public class GoalService {
 
         return new PlanRecommendResponseDto(plan.getTargetDistance(), plan.getTargetPeriod(),
                 plan.getWeeklyFrequency(), plan.getAvailableTime(), baselineVolume, plan.getReason());
+    }
+
+    public FutureGoalResponseDto saveFutureGoal(Long userId, FutureGoalSaveRequestDto request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
+
+        FutureGoal futureGoal = new FutureGoal(user, request.getScene(), request.getTargetDistance(),
+                request.getTargetPeriod(), request.getWeeklyFrequency(), request.getAvailableTime());
+
+        FutureGoal savedFutureGoal = futureGoalRepository.save(futureGoal);
+        return new FutureGoalResponseDto(savedFutureGoal);
+    }
+
+    public FutureGoalResponseDto getFutureGoal(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
+
+        FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "설정된 미래 목표가 없습니다"));
+
+        return new FutureGoalResponseDto(futureGoal);
     }
 
     private String buildSystemPrompt() {

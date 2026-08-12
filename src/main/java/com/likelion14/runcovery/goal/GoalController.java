@@ -3,6 +3,8 @@ package com.likelion14.runcovery.goal;
 import com.likelion14.runcovery.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,5 +34,21 @@ public class GoalController {
             @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody SelectedSceneRequestDto request) {
         return ApiResponse.ok(goalService.recommendPlanByScene(userId, request));
+    }
+
+    // 미래목표 저장
+    @PostMapping("/future")
+    public ResponseEntity<ApiResponse<FutureGoalResponseDto>> saveFutureGoal(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody FutureGoalSaveRequestDto request) {
+        FutureGoalResponseDto response = goalService.saveFutureGoal(userId, request);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(response, HttpStatus.CREATED));
+    }
+
+    // 미래목표 조회
+    @GetMapping("/future")
+    public ApiResponse<FutureGoalResponseDto> getFutureGoal(@RequestHeader("X-User-Id") Long userId) {
+        return ApiResponse.ok(goalService.getFutureGoal(userId));
     }
 }
