@@ -25,4 +25,12 @@ public class GoalController {
             @Valid @RequestBody FuturePlanRequestDto request) {
         return ApiResponse.ok(goalService.recommendScenesByPlan(userId, request));
     }
+
+    // 선택한 장면 기반 미래목표 수치 추천
+    @PostMapping("/future/plan/recommend")
+    public ApiResponse<PlanRecommendResponseDto> recommendPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody SelectedSceneRequestDto request) {
+        return ApiResponse.ok(goalService.recommendPlanByScene(userId, request));
+    }
 }

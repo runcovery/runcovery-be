@@ -31,6 +31,20 @@ public class GoalService {
                 buildPlanSystemPrompt(), buildPlanUserPrompt(user, request), ScenesResponseDto.class);
     }
 
+    public PlanRecommendResponseDto recommendPlanByScene(Long userId, SelectedSceneRequestDto request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
+
+        RecommendedPlanDto plan = openAiService.getStructuredCompletion(
+                buildPlanRecommendSystemPrompt(), buildPlanRecommendUserPrompt(user, request), RecommendedPlanDto.class);
+
+        int baselineVolume = plan.getTargetDistance() * plan.getTargetPeriod()
+                * plan.getWeeklyFrequency() * plan.getAvailableTime();
+
+        return new PlanRecommendResponseDto(plan.getTargetDistance(), plan.getTargetPeriod(),
+                plan.getWeeklyFrequency(), plan.getAvailableTime(), baselineVolume, plan.getReason());
+    }
+
     private String buildSystemPrompt() {
         return """
             당신은 러닝 코치이자 동기부여 전문가입니다. 사용자의 프로필 정보를 바탕으로,
@@ -119,5 +133,47 @@ public class GoalService {
                 user.getMaxRunDuration(), user.getAvgSleepHours(), user.getHeight(), user.getWeight(),
                 request.getTargetDistance(), request.getTargetPeriod(),
                 request.getWeeklyFrequency(), request.getAvailableTime());
+    }
+
+    private String buildPlanRecommendSystemPrompt() {
+        return """
+            당신은 러닝 코치이자 목표 설계 전문가입니다. 사용자의 프로필 정보와, 사용자가 방금 선택한
+            미래의 모습(장면)과 그 이유를 바탕으로, 이 사용자에게 적합한 러닝 목표 수치를 추천합니다.
+            - targetDistance: 목표 거리(km, 정수). 3~42 사이의 현실적인 값으로 추천하세요.
+            - targetPeriod: 목표 달성 기간(개월, 정수). 1~12 사이의 현실적인 값으로 추천하세요.
+            - weeklyFrequency: 주간 운동 목표 횟수(회, 정수). 1~7 사이의 현실적인 값으로 추천하세요.
+            - availableTime: 1회 운동 시 투자 가능한 시간(분, 정수). 10~120 사이의 현실적인 값으로 추천하세요.
+            - 위 4개 수치는 사용자의 체력·경험·수면 등 프로필과 선택한 장면의 성격(예: 완주/도전형인지,
+              친목/즐거움형인지)에 맞게 서로 조화롭게 추천하세요. 지나치게 부담스럽거나 너무 쉬운 목표는 피하세요.
+            - reason: 왜 이 4개 수치가 이 사용자에게 적합한지 한 문장으로 설명하세요.
+              이 필드는 장면 추천 API의 reason과 달리, 추천한 숫자를 문장에 직접 언급해도 됩니다.
+              매번 똑같은 문장 틀("현재 체력과 러닝 경험을 고려했을 때 ~가 적합해요")을 반복하지 말고,
+              아래처럼 다양한 표현 방식 중 자연스러운 것을 골라 작성하세요:
+              - "현재 체력과 수면 패턴을 고려했을 때 3개월 5km가 적합해요" (수치 요약형)
+              - "계단을 올라도 숨이 차지 않으려면 zone2로 꾸준한 운동이 필요해요" (실생활 효과·운동 팁형)
+              - "무리 없이 습관을 들이려면 주 3회 30분씩이 딱 맞아요" (습관 형성 강조형)
+            """;
+    }
+
+    private String buildPlanRecommendUserPrompt(User user, SelectedSceneRequestDto request) {
+        return """
+            다음은 사용자의 프로필입니다:
+            - 닉네임: %s
+            - 나이: %d세
+            - 성별: %s
+            - 러닝 경험: %s
+            - 1회 최대 연속 러닝 지속 시간: %d분
+            - 평균 수면 시간: %s시간
+            - 키: %scm, 몸무게: %skg
+
+            사용자가 방금 선택한 미래의 모습(장면)은 다음과 같습니다:
+            - 장면: %s
+            - 선택 이유: %s
+
+            이 프로필과 선택한 장면을 참고하여 적합한 러닝 목표 수치(목표 거리, 목표 기간,
+            주간 운동 횟수, 1회 가능 시간)와 그 추천 이유를 알려주세요.
+            """.formatted(user.getNickname(), user.getAge(), user.getGender(), user.getRunningExperience(),
+                user.getMaxRunDuration(), user.getAvgSleepHours(), user.getHeight(), user.getWeight(),
+                request.getScene(), request.getReason());
     }
 }
