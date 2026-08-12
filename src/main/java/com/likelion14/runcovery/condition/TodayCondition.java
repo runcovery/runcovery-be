@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Getter
@@ -39,6 +40,12 @@ public class TodayCondition {
 //    @Column(nullable = false)
 //    private Integer activeCalories;
 
+    @Column
+    private String conditionTitle;
+
+    @Column(length = 1000)
+    private String conditionFeedback;
+
     private Boolean isChecked = false;
 
     public TodayCondition(User user, LocalDate conditionDate, SleepQuality sleepQuality,
@@ -47,13 +54,18 @@ public class TodayCondition {
         this.conditionDate = conditionDate;
         this.sleepQuality = sleepQuality;
         this.bodyCondition = bodyCondition;
-        //this.activeCalories = activeCalories;
+        this.isChecked = true;
     }
 
-    public void update(LocalDate conditionDate, SleepQuality sleepQuality, BodyCondition bodyCondition) {
-        this.conditionDate = conditionDate;
+    public void update(SleepQuality sleepQuality, BodyCondition bodyCondition) {
         this.sleepQuality = sleepQuality;
         this.bodyCondition = bodyCondition;
-        //this.activeCalories = activeCalories;
+        this.isChecked = true;
+    }
+
+    public void updateAnalysis(String conditionTitle, String conditionFeedback) {
+        this.conditionTitle = conditionTitle;
+        this.conditionFeedback = conditionFeedback;
+        this.isChecked = true;
     }
 }

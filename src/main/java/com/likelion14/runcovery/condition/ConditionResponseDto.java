@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 public class ConditionResponseDto {
     //private Long conditionId;
-    private String conditionSummary;    // "최고의 컨디션이에요!"
+    private String conditionTitle;    // "최고의 컨디션이에요!"
     private List<String> conditionItems;
 
 }
