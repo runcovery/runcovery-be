@@ -62,13 +62,15 @@ public class WellnessSkinScanService {
                 scores.pigment()
         );
         record.setTotalScore(calculateTotalScore(scores));
+        // MultipartFile exposes the client-supplied file name, not the client local absolute path.
+        record.setSkinImage(image.getOriginalFilename());
 
         return skinRecordRepository.save(record);
     }
 
     private ConditionScores requestConditionScores(MultipartFile image) {
         MultipartBodyBuilder body = new MultipartBodyBuilder();
-        body.part("file", image.getResource())
+        body.part("image", image.getResource())
                 .filename(image.getOriginalFilename() == null ? "image" : image.getOriginalFilename())
                 .contentType(MediaType.parseMediaType(image.getContentType()));
 
@@ -95,7 +97,11 @@ public class WellnessSkinScanService {
         } catch (CustomException exception) {
             throw exception;
         } catch (WebClientResponseException exception) {
-            log.warn("Skin scan server returned HTTP {}", exception.getStatusCode().value());
+            log.warn(
+                    "Skin scan server returned HTTP {}: {}",
+                    exception.getStatusCode().value(),
+                    exception.getResponseBodyAsString()
+            );
             throw new CustomException(
                     HttpStatus.BAD_GATEWAY,
                     "피부 분석 서버가 오류를 반환했습니다. (HTTP "
