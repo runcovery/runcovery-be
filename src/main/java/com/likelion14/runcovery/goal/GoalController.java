@@ -1,6 +1,7 @@
 package com.likelion14.runcovery.goal;
 
 import com.likelion14.runcovery.common.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,5 +16,13 @@ public class GoalController {
     @PostMapping("/future/scenes/recommend/profile")
     public ApiResponse<ScenesResponseDto> recommendScenesByProfile(@RequestHeader("X-User-Id") Long userId) {
         return ApiResponse.ok(goalService.recommendScenesByProfile(userId));
+    }
+
+    // 러닝 계획(수치) 기반 미래 장면 추천
+    @PostMapping("/future/scenes/recommend/plan")
+    public ApiResponse<ScenesResponseDto> recommendScenesByPlan(
+            @RequestHeader("X-User-Id") Long userId,
+            @Valid @RequestBody FuturePlanRequestDto request) {
+        return ApiResponse.ok(goalService.recommendScenesByPlan(userId, request));
     }
 }
