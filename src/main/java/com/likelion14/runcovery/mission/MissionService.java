@@ -72,6 +72,10 @@ public class MissionService {
 
         log.info("OpenAI 응답 완료");
 
+        if (aiResult == null || aiResult.recommendedIntensity() == null) {
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "AI 미션 생성에 실패했습니다.");
+        }
+
         // 6. 응답 미션 저장
         TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
                 .map(existing -> {
@@ -92,17 +96,24 @@ public class MissionService {
         log.info("미션 저장 완료");
 
         // 7. 응답 반환
-        MissionResponseDto response = new MissionResponseDto(
-                savedMission.getId(),
-                savedMission.getRecommendedIntensity(),
-                savedMission.getRecommendedTime(),
-                savedMission.getRecommendedZone(),
-                savedMission.getRecommendedZoneDesc(),
-                savedMission.getDetailComment(),
-                savedMission.getIsRest()
-        );
+        return MissionResponseDto.from(savedMission);
+    }
 
-        return response;
+    public MissionResponseDto getTodayMission() {
+
+        User user = userRepository.findById(1L)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
+
+        LocalDate today = LocalDate.now();
+
+        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
+
+
+        TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 미션 기록이 없습니다."));
+
+        return MissionResponseDto.from(mission);
     }
 
     private String buildSystemPrompt() {

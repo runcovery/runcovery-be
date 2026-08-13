@@ -17,4 +17,5 @@ public interface MissionRepository extends JpaRepository<TodayMission, Long> {
     List<TodayMission> findByMissionDateBetweenAndIsRestTrue(LocalDate start, LocalDate end);
 
     Optional<TodayMission> findByTodayConditionAndMissionDate(TodayCondition condition, LocalDate missionDate);
+
 }
