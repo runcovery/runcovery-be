@@ -1,5 +1,6 @@
 package com.likelion14.runcovery.body;
 
+import com.likelion14.runcovery.common.AppConstants;
 import com.likelion14.runcovery.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -14,16 +15,15 @@ public class BodyIssueController {
 
     // 통증부위 조회
     @GetMapping
-    public ApiResponse<BodyIssueListResponseDto> getBodyIssues(@RequestHeader("X-User-Id") Long userId) {
-        return ApiResponse.ok(bodyIssueService.getBodyIssues(userId));
+    public ApiResponse<BodyIssueListResponseDto> getBodyIssues() {
+        return ApiResponse.ok(bodyIssueService.getBodyIssues(AppConstants.DEFAULT_USER_ID));
     }
 
     // 통증부위 저장
     @PutMapping
     public ApiResponse<BodyIssueSaveResponseDto> saveBodyIssues(
-            @RequestHeader("X-User-Id") Long userId,
             @Valid @RequestBody BodyIssueSaveRequestDto request
     ) {
-        return ApiResponse.ok(bodyIssueService.saveBodyIssues(userId, request));
+        return ApiResponse.ok(bodyIssueService.saveBodyIssues(AppConstants.DEFAULT_USER_ID, request));
     }
 }

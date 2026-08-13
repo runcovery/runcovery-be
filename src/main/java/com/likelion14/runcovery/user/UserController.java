@@ -1,5 +1,6 @@
 package com.likelion14.runcovery.user;
 
+import com.likelion14.runcovery.common.AppConstants;
 import com.likelion14.runcovery.common.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class UserController {
 
     // 유저 조회
     @GetMapping("/me")
-    public ApiResponse<UserResponseDto> getMyInfo(@RequestHeader("X-User-Id") Long userId) {
-        return ApiResponse.ok(userService.getMyInfo(userId));
+    public ApiResponse<UserResponseDto> getMyInfo() {
+        return ApiResponse.ok(userService.getMyInfo(AppConstants.DEFAULT_USER_ID));
     }
 }
