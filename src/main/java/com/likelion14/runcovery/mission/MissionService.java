@@ -59,8 +59,9 @@ public class MissionService {
         // 4. 현재 날씨 조회
         WeatherResponseDto currentWeather = weatherService.getCurrentWeather(lat, lon);
 
-        log.info("OpenAI 요청 시작");
         // 5. OpenAI에 미션 생성 요청 (주간목표, 주간스케줄, 컨디션, 날씨 전달)
+        log.info("OpenAI 요청 시작");
+
         MissionAiResult aiResult = openAiService.getStructuredCompletion(
                 buildSystemPrompt(), buildUserPrompt(user, condition, weeklyGoal, schedules, currentWeather), MissionAiResult.class);
 
