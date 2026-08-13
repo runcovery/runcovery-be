@@ -3,6 +3,7 @@ package com.likelion14.runcovery.goal;
 import lombok.Getter;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Getter
 public class FutureGoalResponseDto {
@@ -14,6 +15,7 @@ public class FutureGoalResponseDto {
     private Integer weeklyFrequency;
     private Integer availableTime;
     private BigDecimal achievementRate;
+    private LocalDateTime createdAt;
 
     public FutureGoalResponseDto(FutureGoal futureGoal) {
         this.futureId = futureGoal.getId();
@@ -23,5 +25,6 @@ public class FutureGoalResponseDto {
         this.weeklyFrequency = futureGoal.getWeeklyFrequency();
         this.availableTime = futureGoal.getAvailableTime();
         this.achievementRate = futureGoal.getAchievementRate();
+        this.createdAt = futureGoal.getCreatedAt();
     }
 }
