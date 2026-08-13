@@ -60,4 +60,10 @@ public class GoalController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok(response, HttpStatus.CREATED));
     }
+
+    // 이번 주 주간목표 조회
+    @GetMapping("/weekly/current")
+    public ApiResponse<WeeklyGoalResponseDto> getCurrentWeeklyGoal(@RequestHeader("X-User-Id") Long userId) {
+        return ApiResponse.ok(goalService.getCurrentWeeklyGoal(userId));
+    }
 }

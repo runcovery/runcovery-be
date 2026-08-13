@@ -105,6 +105,21 @@ public class GoalService {
         return new WeeklyGoalResponseDto(savedWeeklyGoal, savedSchedules);
     }
 
+    public WeeklyGoalResponseDto getCurrentWeeklyGoal(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
+
+        FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "설정된 미래 목표가 없습니다"));
+
+        WeeklyGoal currentWeeklyGoal = weeklyGoalRepository.findTopByFutureGoalOrderByWeekNoDesc(futureGoal)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "생성된 주간 목표가 없습니다"));
+
+        List<WeeklySchedule> schedules = weeklyScheduleRepository.findByWeeklyGoal(currentWeeklyGoal);
+
+        return new WeeklyGoalResponseDto(currentWeeklyGoal, schedules);
+    }
+
     private String buildSystemPrompt() {
         return """
             당신은 러닝 코치이자 동기부여 전문가입니다. 사용자의 프로필 정보를 바탕으로,
