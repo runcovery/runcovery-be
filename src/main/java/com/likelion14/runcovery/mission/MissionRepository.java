@@ -1,5 +1,6 @@
 package com.likelion14.runcovery.mission;
 
+import com.likelion14.runcovery.condition.TodayCondition;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.time.LocalDate;
@@ -14,4 +15,7 @@ public interface MissionRepository extends JpaRepository<TodayMission, Long> {
 
     // 휴식 횟수
     List<TodayMission> findByMissionDateBetweenAndIsRestTrue(LocalDate start, LocalDate end);
+
+    Optional<TodayMission> findByTodayConditionAndMissionDate(TodayCondition condition, LocalDate missionDate);
+
 }

@@ -1,6 +1,5 @@
 package com.likelion14.runcovery.condition;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

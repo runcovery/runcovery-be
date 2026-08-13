@@ -19,7 +19,6 @@ public class ConditionController {
 
     @GetMapping("/latest")
     public ApiResponse<ConditionResponseDto> getLatestCondition() {
-        ConditionResponseDto result = conditionService.getLatestCondition();
-        return ApiResponse.ok(result);
+        return ApiResponse.ok(conditionService.getLatestCondition());
     }
 }
