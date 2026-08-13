@@ -5,10 +5,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likelion14.runcovery.activity.ActivityRecord;
 import com.likelion14.runcovery.activity.ActivityRecordRepository;
-import com.likelion14.runcovery.activity.ActivityService;
 import com.likelion14.runcovery.common.OpenAiService;
 import com.likelion14.runcovery.common.exception.CustomException;
-import com.likelion14.runcovery.goal.ScenesResponseDto;
 import com.likelion14.runcovery.mission.MissionRepository;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
@@ -18,7 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Slf4j
