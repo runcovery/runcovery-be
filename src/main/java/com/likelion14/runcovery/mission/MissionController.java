@@ -18,6 +18,10 @@ public class MissionController {
 
     @GetMapping("/today")
     public ApiResponse<MissionResponseDto> getTodayMission() {
-        return ApiResponse.ok(missionService.getTodayMission());
+        MissionResponseDto result = missionService.getTodayMission();
+        if (result == null) {
+            return ApiResponse.ok("아직 오늘의 미션이 생성되지 않았습니다.");
+        }
+        return ApiResponse.ok(result);
     }
 }

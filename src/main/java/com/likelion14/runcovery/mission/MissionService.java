@@ -104,9 +104,10 @@ public class MissionService {
         TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
 
-
         TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 미션 기록이 없습니다."));
+                .orElse(null);
+
+        if (mission == null) return null;
 
         return MissionResponseDto.from(mission);
     }
