@@ -112,38 +112,53 @@ public class MissionService {
 
     private String buildSystemPrompt() {
         return """
-            사용자의 컨디션, 날씨, 주간 목표를 고려하여 오늘의 일일 러닝 미션을 생성해주세요.
-            반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
-            "완전히", "절대", "항상" 등 극단적이고 단정적인 표현은 사용하지 마세요.
-            컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, 운동 관련 필드는 "오늘은 휴식을 취하세요."로 채워주세요.
-            {
-              "recommendedIntensity": "권장 운동 강도 (예: 중·고강도 러닝)",
-              "recommendedTime": "권장 운동 시간 (예: 20분 내외로 도전해보세요)",
-              "recommendedZone": "권장 러닝 존 (예: Zone 3~4)",
-              "recommendedZoneDesc": "러닝 존 설명 (예: 숨이 약간 찰 정도, 짧은 대답만 가능)",
-              "detailComment": "상세 운동 방법 (예: 워밍업(5분)-메인(10분)-쿨다운(5분))",
-              "isRest": false
-            }
-    """;
+                사용자의 컨디션, 날씨, 주간 목표를 고려하여 오늘의 일일 러닝 미션을 생성해주세요.
+                반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트나 마크다운은 포함하지 마세요.
+                
+                [규칙]
+                - "완전히", "절대", "항상" 등 극단적이고 단정적인 표현은 사용하지 마세요.
+                - 권장 운동 시간은 사용자의 1회 운동 가능 시간을 초과하지 않아야 합니다.
+                - 권장 운동 강도와 러닝 존은 주간 목표와 주간 스케줄에 맞게 설정해주세요.
+                - 오늘의 컨디션 최근 운동 상태, 통증 부위, 피로도 분석을 참고하여 미션에 반영해주세요.
+                - detailComment는 워밍업/메인/쿨다운 시간 구성만 작성하고, 운동 강도 표현은 포함하지 마세요.
+                - 컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, 나머지 필드는 "오늘은 휴식을 취하세요."로 채워주세요.
+                
+                [응답 형식]
+                {
+                  "recommendedIntensity": "중·고강도 러닝",
+                  "recommendedTime": "20분 내외로 도전해보세요",
+                  "recommendedZone": "Zone 3~4",
+                  "recommendedZoneDesc": "숨이 약간 찰 정도, 짧은 대답만 가능",
+                  "detailComment": "워밍업(5분)-메인(10분)-쿨다운(5분)",
+                  "isRest": false
+                }
+               """;
     }
 
     private String buildUserPrompt(User user, TodayCondition condition,
                                    WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather) {
         return String.format("""
-                       사용자 정보: %s, %d세, %.1fkg
-                       몸 상태: %s
-                       수면: %s
-                       주간 목표: %s
-                       주간 스케줄: %s
-                       현재 날씨: 기온 %.1f°C, 습도 %d%%, 날씨 %s
-                        """,
+                        사용자 정보: %s, %d세, %.1fkg 최대 러닝 가능 시간: %d분
+                        몸 상태: %s
+                        수면: %s
+                        오늘의 컨디션 분석: %s
+                        주간 목표: %s
+                        주간 스케줄: %s
+                        주간 운동 가능 횟수: %d회
+                        1회 운동 가능 시간: %d분
+                        현재 날씨: 기온 %.1f°C, 습도 %d%%, 날씨 %s
+                         """,
                 user.getGender(),
                 user.getAge(),
                 user.getWeight(),
+                user.getMaxRunDuration(),
                 condition.getBodyCondition().getDescription(),
                 condition.getSleepQuality().getDescription(),
+                condition.getConditionFeedback(),
                 weeklyGoal.getWeeklyGoal(),
                 schedules,
+                weeklyGoal.getFutureGoal().getWeeklyFrequency(),
+                weeklyGoal.getFutureGoal().getAvailableTime(),
                 currentWeather.getTemp(),
                 currentWeather.getHumidity(),
                 currentWeather.getWeatherDesc()
