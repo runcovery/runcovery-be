@@ -5,8 +5,6 @@ import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
 import com.likelion14.runcovery.common.weather.WeatherService;
 import com.likelion14.runcovery.condition.ConditionRepository;
-import com.likelion14.runcovery.condition.ConditionRequestDto;
-import com.likelion14.runcovery.condition.ConditionResponseDto;
 import com.likelion14.runcovery.condition.TodayCondition;
 import com.likelion14.runcovery.goal.WeeklyGoal;
 import com.likelion14.runcovery.goal.WeeklyGoalRepository;
@@ -46,8 +44,6 @@ public class MissionService {
         TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
 
-        log.info("컨디션 조회 완료: {}", condition.getId());
-
         // 3. 주간 목표, 스케줄 조회
         WeeklyGoal weeklyGoal = weeklyGoalRepository.findTopByUserOrderByWeekNoDesc(user)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "주간 목표가 없습니다."));
@@ -62,8 +58,6 @@ public class MissionService {
 
         // 4. 현재 날씨 조회
         WeatherResponseDto currentWeather = weatherService.getCurrentWeather(lat, lon);
-
-        log.info("날씨 조회 완료");
 
         log.info("OpenAI 요청 시작");
         // 5. OpenAI에 미션 생성 요청 (주간목표, 주간스케줄, 컨디션, 날씨 전달)
