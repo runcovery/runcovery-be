@@ -73,13 +73,20 @@ public class MissionService {
         log.info("OpenAI 응답 완료");
 
         // 6. 응답 미션 저장
-        TodayMission mission = new TodayMission(condition, weeklyGoal, today,
-                aiResult.recommendedIntensity(),
-                aiResult.recommendedTime(),
-                aiResult.recommendedZone(),
-                aiResult.recommendedZoneDesc(),
-                aiResult.detailComment());
-        mission.setIsRest(aiResult.isRest());
+        TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
+                .map(existing -> {
+                    existing.update(today, aiResult.recommendedIntensity(), aiResult.recommendedTime(),
+                            aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
+                    existing.setIsRest(aiResult.isRest());
+                    return existing;
+                })
+                .orElseGet(() -> {
+                    TodayMission newMission = new TodayMission(condition, weeklyGoal, today,
+                            aiResult.recommendedIntensity(), aiResult.recommendedTime(),
+                            aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
+                    newMission.setIsRest(aiResult.isRest());
+                    return newMission;
+                });
         TodayMission savedMission = missionRepository.save(mission);
 
         log.info("미션 저장 완료");
