@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -23,6 +24,8 @@ public class GoalService {
     private final WeeklyScheduleRepository weeklyScheduleRepository;
     private final ActivityRecordRepository activityRecordRepository;
     private final OpenAiService openAiService;
+
+    private static final long WEEKLY_GOAL_VALID_DAYS = 7;
 
     public ScenesResponseDto recommendScenesByProfile(Long userId) {
         User user = userRepository.findById(userId)
@@ -82,6 +85,32 @@ public class GoalService {
         FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "설정된 미래 목표가 없습니다"));
 
+        return createWeeklyGoal(user, futureGoal);
+    }
+
+    public WeeklyGoalResponseDto getCurrentWeeklyGoal(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
+
+        FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user)
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "설정된 미래 목표가 없습니다"));
+
+        Optional<WeeklyGoal> latestWeeklyGoal = weeklyGoalRepository.findTopByFutureGoalOrderByWeekNoDesc(futureGoal);
+        if (latestWeeklyGoal.isEmpty() || isExpired(latestWeeklyGoal.get())) {
+            return createWeeklyGoal(user, futureGoal);
+        }
+
+        WeeklyGoal currentWeeklyGoal = latestWeeklyGoal.get();
+        List<WeeklySchedule> schedules = weeklyScheduleRepository.findByWeeklyGoal(currentWeeklyGoal);
+
+        return new WeeklyGoalResponseDto(currentWeeklyGoal, schedules);
+    }
+
+    private boolean isExpired(WeeklyGoal weeklyGoal) {
+        return weeklyGoal.getCreatedAt().isBefore(LocalDateTime.now().minusDays(WEEKLY_GOAL_VALID_DAYS));
+    }
+
+    private WeeklyGoalResponseDto createWeeklyGoal(User user, FutureGoal futureGoal) {
         int currentMaxDistance = activityRecordRepository.findTop10ByUserOrderByRecordDateDesc(user).stream()
                 .mapToInt(ActivityRecord::getDistanceM)
                 .max().orElse(0) / 1000;
@@ -103,21 +132,6 @@ public class GoalService {
                         .toList());
 
         return new WeeklyGoalResponseDto(savedWeeklyGoal, savedSchedules);
-    }
-
-    public WeeklyGoalResponseDto getCurrentWeeklyGoal(Long userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다"));
-
-        FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "설정된 미래 목표가 없습니다"));
-
-        WeeklyGoal currentWeeklyGoal = weeklyGoalRepository.findTopByFutureGoalOrderByWeekNoDesc(futureGoal)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "생성된 주간 목표가 없습니다"));
-
-        List<WeeklySchedule> schedules = weeklyScheduleRepository.findByWeeklyGoal(currentWeeklyGoal);
-
-        return new WeeklyGoalResponseDto(currentWeeklyGoal, schedules);
     }
 
     private String buildSystemPrompt() {
