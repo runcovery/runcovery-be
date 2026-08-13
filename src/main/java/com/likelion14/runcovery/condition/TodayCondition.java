@@ -8,6 +8,7 @@ import lombok.Setter;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @Entity
 @Getter
@@ -27,30 +28,44 @@ public class TodayCondition {
     @Column(nullable = false)
     private LocalDate conditionDate;
 
-    @Column(nullable = false, precision = 4, scale = 2)
-    private BigDecimal sleepHours;
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private SleepQuality sleepQuality;
 
     @Column(nullable = false)
-    private String bodyCondition;
+    @Enumerated(EnumType.STRING)
+    private BodyCondition bodyCondition;
 
-    @Column(nullable = false)
-    private Integer activeCalories;
+    // 기존 활동기록과 미션 수행여부로 변경
+//    @Column(nullable = false)
+//    private Integer activeCalories;
+
+    @Column
+    private String conditionTitle;
+
+    @Column(length = 1000)
+    private String conditionFeedback;
 
     private Boolean isChecked = false;
 
-    public TodayCondition(User user, LocalDate conditionDate, BigDecimal sleepHours,
-                           String bodyCondition, Integer activeCalories) {
+    public TodayCondition(User user, LocalDate conditionDate, SleepQuality sleepQuality,
+                          BodyCondition bodyCondition) {
         this.user = user;
         this.conditionDate = conditionDate;
-        this.sleepHours = sleepHours;
+        this.sleepQuality = sleepQuality;
         this.bodyCondition = bodyCondition;
-        this.activeCalories = activeCalories;
+        this.isChecked = true;
     }
 
-    public void update(LocalDate conditionDate, BigDecimal sleepHours, String bodyCondition, Integer activeCalories) {
-        this.conditionDate = conditionDate;
-        this.sleepHours = sleepHours;
+    public void update(SleepQuality sleepQuality, BodyCondition bodyCondition) {
+        this.sleepQuality = sleepQuality;
         this.bodyCondition = bodyCondition;
-        this.activeCalories = activeCalories;
+        this.isChecked = true;
+    }
+
+    public void updateAnalysis(String conditionTitle, String conditionFeedback) {
+        this.conditionTitle = conditionTitle;
+        this.conditionFeedback = conditionFeedback;
+        this.isChecked = true;
     }
 }
