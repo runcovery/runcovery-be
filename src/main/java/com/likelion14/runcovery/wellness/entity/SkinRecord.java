@@ -1,4 +1,5 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.entity;
+import com.likelion14.runcovery.wellness.enums.SkinRecordType;
 
 import com.likelion14.runcovery.user.User;
 import jakarta.persistence.*;
@@ -82,3 +83,4 @@ public class SkinRecord {
         this.pigment = pigment;
     }
 }
+
