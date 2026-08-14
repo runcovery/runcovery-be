@@ -1,10 +1,12 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.dto;
+import com.likelion14.runcovery.wellness.entity.SkinRecord;
+import com.likelion14.runcovery.wellness.enums.SkinRecordType;
 
 import java.time.LocalDate;
 
 public record SkinRecordResponseDto(
         Long skinId,
-        Long memberId,
+        Long userId,
         SkinRecordType type,
         LocalDate measuredDate,
         Integer totalScore,
@@ -35,3 +37,4 @@ public record SkinRecordResponseDto(
         );
     }
 }
+

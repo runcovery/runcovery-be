@@ -1,4 +1,4 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.service;
 
 import com.likelion14.runcovery.activity.ActivityService;
 import com.likelion14.runcovery.common.weather.WeatherService;
@@ -23,3 +23,4 @@ public class WellnessService {
         return weatherService.getPastWeather(record.getStartTime(), record.getLat(), record.getLon());
     }
 }
+

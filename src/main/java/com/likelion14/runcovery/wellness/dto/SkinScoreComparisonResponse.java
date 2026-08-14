@@ -1,4 +1,6 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.dto;
+import com.likelion14.runcovery.wellness.entity.SkinRecord;
+import com.likelion14.runcovery.wellness.enums.SkinRecordType;
 
 import java.time.LocalDate;
 

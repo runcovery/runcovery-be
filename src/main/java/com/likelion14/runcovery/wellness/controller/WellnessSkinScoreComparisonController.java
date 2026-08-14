@@ -1,4 +1,6 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.controller;
+import com.likelion14.runcovery.wellness.dto.SkinScoreComparisonResponse;
+import com.likelion14.runcovery.wellness.service.WellnessSkinScoreComparisonService;
 
 import com.likelion14.runcovery.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +25,12 @@ public class WellnessSkinScoreComparisonController {
      */
     @GetMapping({"/comparison", "/compare"})
     public ApiResponse<SkinScoreComparisonResponse> compareSkinScores(
-            @RequestParam Long memberId,
-            @RequestParam(required = false)
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
         return ApiResponse.ok(
-                wellnessSkinScoreComparisonService.compare(memberId, date)
+                wellnessSkinScoreComparisonService.compare(userId, date)
         );
     }
 }

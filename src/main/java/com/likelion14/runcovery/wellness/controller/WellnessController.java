@@ -1,4 +1,4 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.controller;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,3 +9,4 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class WellnessController {
 }
+

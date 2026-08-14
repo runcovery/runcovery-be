@@ -1,4 +1,5 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.entity;
+import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -65,3 +66,4 @@ public class Prescription {
         this.summary = summary;
     }
 }
+

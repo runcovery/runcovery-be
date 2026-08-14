@@ -1,9 +1,13 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.service;
+import com.likelion14.runcovery.wellness.dto.SkinScanResponseDto;
+import com.likelion14.runcovery.wellness.dto.SkinScanResponseDto.ConditionScores;
+import com.likelion14.runcovery.wellness.entity.SkinRecord;
+import com.likelion14.runcovery.wellness.enums.SkinRecordType;
+import com.likelion14.runcovery.wellness.repository.SkinRecordRepository;
 
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
-import com.likelion14.runcovery.wellness.SkinScanResponseDto.ConditionScores;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,10 +45,10 @@ public class WellnessSkinScanService {
     @Value("${wellness.skin-scan.max-response-size:20971520}")
     private int maxResponseSize;
 
-    public SkinRecord scanAndSave(Long memberId, SkinRecordType type, MultipartFile image) {
-        validateRequest(memberId, type, image);
+    public SkinRecord scanAndSave(Long userId, SkinRecordType type, MultipartFile image) {
+        validateRequest(userId, type, image);
 
-        User user = userRepository.findById(memberId)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다."));
         ConditionScores scores = requestConditionScores(image);
         validateScores(scores);
@@ -129,9 +133,9 @@ public class WellnessSkinScanService {
         }
     }
 
-    private void validateRequest(Long memberId, SkinRecordType type, MultipartFile image) {
-        if (memberId == null) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "memberId는 필수입니다.");
+    private void validateRequest(Long userId, SkinRecordType type, MultipartFile image) {
+        if (userId == null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "userId는 필수입니다.");
         }
         if (type == null) {
             throw new CustomException(HttpStatus.BAD_REQUEST, "피부 측정 유형은 필수입니다.");
@@ -181,3 +185,4 @@ public class WellnessSkinScanService {
         return false;
     }
 }
+
