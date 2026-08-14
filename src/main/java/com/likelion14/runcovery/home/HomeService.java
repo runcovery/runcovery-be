@@ -4,7 +4,6 @@ import com.likelion14.runcovery.common.OpenAiService;
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
 import com.likelion14.runcovery.common.weather.WeatherService;
-import com.likelion14.runcovery.condition.ConditionResponseDto;
 import com.likelion14.runcovery.goal.FutureGoal;
 import com.likelion14.runcovery.goal.FutureGoalRepository;
 import com.likelion14.runcovery.mission.MissionRepository;
@@ -13,13 +12,13 @@ import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
 import com.likelion14.runcovery.wellness.Prescription;
 import com.likelion14.runcovery.wellness.PrescriptionRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -36,6 +35,7 @@ public class HomeService {
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
 
+    @Transactional
     public HomeResponseDto getHome(double lat, double lon) {
 
         LocalDate today = LocalDate.now();
@@ -44,72 +44,65 @@ public class HomeService {
         User user = userRepository.findById(1L)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
-        String nickname = user.getNickname();
+        // 미래 목표 조회
+        FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user).orElse(null);
 
-        // 미래 장면
+        // 미래 목표 관련 필드
         String scene = null;
         int achievementRate = 0;
         int daysRemaining = 0;
 
-        FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "유저에 해당하는 미래목표가 없습니다."));
-        scene = futureGoal.getScene();
+        if (futureGoal != null) {
+            scene = futureGoal.getScene();
+            achievementRate = calcAndSaveAchievementRate(futureGoal);
+            daysRemaining = (int) ChronoUnit.DAYS.between(
+                    today,
+                    futureGoal.getCreatedAt().toLocalDate().plusMonths(futureGoal.getTargetPeriod())
+            );
+        }
 
-        // 달성률
+        // 날씨 조회
+        WeatherResponseDto weather = weatherService.getCurrentWeather(lat, lon);
+        int temp = (int) Math.round(weather.getTemp());
+
+        // 웰니스 팁 생성
+        String wellnessTip = buildWellnessTip(today, weather);
+
+        return new HomeResponseDto(user.getNickname(), scene, achievementRate, temp, daysRemaining, wellnessTip);
+    }
+
+    // 달성률 계산
+    private int calcAndSaveAchievementRate(FutureGoal futureGoal) {
         int totalTarget = futureGoal.getWeeklyFrequency() * (futureGoal.getTargetPeriod() * 4);
         long completedCount = missionRepository.countByIsCompletedTrue();
-        achievementRate = totalTarget == 0 ? 0 :
+        int achievementRate = totalTarget == 0 ? 0 :
                 (int) Math.min((double) completedCount / totalTarget * 100, 100);
 
-        log.info("총 카운트 : {}, 완료 카운트 : {}, 달성률 : {}", totalTarget, completedCount, achievementRate);
+        log.info("총 가운트 : {}, 완료 카운트 : {}, 달성률 : {}", totalTarget, completedCount, achievementRate);
 
         futureGoal.setAchievementRate(BigDecimal.valueOf(achievementRate));
         futureGoalRepository.save(futureGoal);
+        return achievementRate;
+    }
 
-
-        // 현재 온도
-        WeatherResponseDto weather = weatherService.getCurrentWeather(lat, lon);
-        int temp = (int) Math.round(weather.getTemp());
-        log.info("온도 : {}, 변환 : {}", weather.getTemp(), temp);
-
-        // 남은 일수
-        daysRemaining = (int) ChronoUnit.DAYS.between(
-                LocalDate.now(),
-                futureGoal.getCreatedAt().toLocalDate().plusMonths(futureGoal.getTargetPeriod())
-        );
-
-        log.info("test 일 : {} ", futureGoal.getTargetPeriod());
-
-
-        // 프롬프트
-        log.info("웰니스 팁 생성 시작");
-
-        String userPrompt;
-        String wellnessTip;
-
+    // 상태에 따른 웰니스 팁 생성
+    private String buildWellnessTip(LocalDate today, WeatherResponseDto weather) {
+        List<Prescription> prescriptions = prescriptionRepository.findByPrescriptionDate(today);
         TodayMission mission = missionRepository.findByMissionDate(today).orElse(null);
 
-        List<Prescription> prescription = prescriptionRepository.findByPrescriptionDate(today);
-
-        if (!prescription.isEmpty()) {
+        if (!prescriptions.isEmpty()) {
             // 처방전 리포트 생성 후
-            userPrompt = buildCompletedMissionPrompt(prescription);
-            wellnessTip = openAiService.getTextCompletion(buildSystemPrompt(), userPrompt);
+            return openAiService.getTextCompletion(buildSystemPrompt(), buildCompletedMissionPrompt(prescriptions));
         } else if (mission != null && mission.getIsCompleted()) {
             // 미션 완료, 처방전 생성 전
-            wellnessTip = "오늘의 운동을 완료했어요! 사후관리 리포트를 받아보세요.";
+            return "오늘의 운동을 완료했어요! 사후관리 리포트를 받아보세요.";
         } else if (mission != null) {
             // 미션 생성 시
-            userPrompt = buildMissionPrompt(mission);
-            wellnessTip = openAiService.getTextCompletion(buildSystemPrompt(), userPrompt);
+            return openAiService.getTextCompletion(buildSystemPrompt(), buildMissionPrompt(mission));
         } else {
             // 미션 생성 전
-            userPrompt = buildWeatherPrompt(weather);
-            wellnessTip = openAiService.getTextCompletion(buildSystemPrompt(), userPrompt);
+            return openAiService.getTextCompletion(buildSystemPrompt(), buildWeatherPrompt(weather));
         }
-        log.info("웰니스팁 생성 완료 : {}", wellnessTip);
-
-        return new HomeResponseDto(nickname, scene, achievementRate, temp, daysRemaining, wellnessTip);
     }
 
     private String buildSystemPrompt() {
