@@ -1,4 +1,4 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -18,3 +18,4 @@ public record SkinScanResponseDto(
             Integer pigment
     ) {}
 }
+

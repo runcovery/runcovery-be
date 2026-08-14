@@ -1,4 +1,4 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.entity;
 
 import com.likelion14.runcovery.activity.ActivityRecord;
 import jakarta.persistence.*;
@@ -46,3 +46,4 @@ public class WellnessReport {
         this.runningIntensity = runningIntensity;
     }
 }
+

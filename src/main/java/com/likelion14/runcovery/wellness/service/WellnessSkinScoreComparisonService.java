@@ -1,4 +1,8 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.service;
+import com.likelion14.runcovery.wellness.dto.SkinScoreComparisonResponse;
+import com.likelion14.runcovery.wellness.entity.SkinRecord;
+import com.likelion14.runcovery.wellness.enums.SkinRecordType;
+import com.likelion14.runcovery.wellness.repository.SkinRecordQueryRepository;
 
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.user.UserRepository;
@@ -19,18 +23,18 @@ public class WellnessSkinScoreComparisonService {
     private final UserRepository userRepository;
     private final SkinRecordQueryRepository skinRecordQueryRepository;
 
-    public SkinScoreComparisonResponse compare(Long memberId, LocalDate measuredDate) {
-        validateMemberId(memberId);
+    public SkinScoreComparisonResponse compare(Long userId, LocalDate measuredDate) {
+        validateUserId(userId);
 
-        if (!userRepository.existsById(memberId)) {
+        if (!userRepository.existsById(userId)) {
             throw new CustomException(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.");
         }
 
         LocalDate today = measuredDate == null ? LocalDate.now() : measuredDate;
         LocalDate previousDay = today.minusDays(1);
 
-        SkinRecord todayRecord = findRecord(memberId, today, "오늘");
-        SkinRecord previousDayRecord = findRecord(memberId, previousDay, "전날");
+        SkinRecord todayRecord = findRecord(userId, today, "오늘");
+        SkinRecord previousDayRecord = findRecord(userId, previousDay, "전날");
 
         return new SkinScoreComparisonResponse(
                 COMPARISON_TYPE,
@@ -40,10 +44,10 @@ public class WellnessSkinScoreComparisonService {
         );
     }
 
-    private SkinRecord findRecord(Long memberId, LocalDate measuredDate, String dateLabel) {
+    private SkinRecord findRecord(Long userId, LocalDate measuredDate, String dateLabel) {
         return skinRecordQueryRepository
                 .findFirstByUser_IdAndTypeAndMeasuredDateOrderByIdDesc(
-                        memberId,
+                        userId,
                         COMPARISON_TYPE,
                         measuredDate
                 )
@@ -53,9 +57,9 @@ public class WellnessSkinScoreComparisonService {
                 ));
     }
 
-    private void validateMemberId(Long memberId) {
-        if (memberId == null) {
-            throw new CustomException(HttpStatus.BAD_REQUEST, "memberId는 필수입니다.");
+    private void validateUserId(Long userId) {
+        if (userId == null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "userId는 필수입니다.");
         }
     }
 }

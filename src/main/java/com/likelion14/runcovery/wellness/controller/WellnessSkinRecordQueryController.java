@@ -1,4 +1,6 @@
-package com.likelion14.runcovery.wellness;
+package com.likelion14.runcovery.wellness.controller;
+import com.likelion14.runcovery.wellness.dto.SkinRecordResponseDto;
+import com.likelion14.runcovery.wellness.service.WellnessSkinRecordQueryService;
 
 import com.likelion14.runcovery.common.ApiResponse;
 import lombok.RequiredArgsConstructor;
@@ -20,10 +22,11 @@ public class WellnessSkinRecordQueryController {
 
     @GetMapping("/skin/records")
     public ApiResponse<List<SkinRecordResponseDto>> getSkinRecords(
-            @RequestParam Long memberId,
-            @RequestParam(required = false)
+            @RequestParam(name = "userId") Long userId,
+            @RequestParam(name = "date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {
-        return ApiResponse.ok(wellnessSkinRecordQueryService.getRecords(memberId, date));
+        return ApiResponse.ok(wellnessSkinRecordQueryService.getRecords(userId, date));
     }
 }
+
