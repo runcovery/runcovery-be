@@ -18,4 +18,6 @@ public interface MissionRepository extends JpaRepository<TodayMission, Long> {
 
     Optional<TodayMission> findByTodayConditionAndMissionDate(TodayCondition condition, LocalDate missionDate);
 
+    long countByIsCompletedTrue();
+
 }
