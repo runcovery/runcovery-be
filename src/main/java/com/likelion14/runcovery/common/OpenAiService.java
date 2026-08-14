@@ -39,4 +39,17 @@ public class OpenAiService {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "AI 응답 생성에 실패했습니다.");
         }
     }
+
+    public String getTextCompletion(String systemPrompt, String userPrompt) {
+        try {
+            return chatClient.prompt()
+                    .system(BASE_SYSTEM_PROMPT + "\n" + systemPrompt)
+                    .user(userPrompt)
+                    .call()
+                    .content();
+        } catch (Exception e) {
+            log.error("OpenAI 호출 실패: {}", e.getMessage());
+            throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "AI 응답 생성에 실패했습니다.");
+        }
+    }
 }
