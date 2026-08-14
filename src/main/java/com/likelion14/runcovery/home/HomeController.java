@@ -13,13 +13,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/home")
 @RequiredArgsConstructor
 public class HomeController {
-    private final WeatherService weatherService;
+    private final HomeService homeService;
 
     @GetMapping("")
-    public ApiResponse<WeatherResponseDto> getWeatherInfo(
-            @RequestParam Double lat,
-            @RequestParam Double lon){
-        WeatherResponseDto weather = weatherService.getCurrentWeather(lat, lon);
-        return ApiResponse.ok(weather);
+    public ApiResponse<HomeResponseDto> getHome(@RequestParam Double lat, @RequestParam Double lon){
+        HomeResponseDto response = homeService.getHome(lat, lon);
+        return ApiResponse.ok(response);
     }
 }

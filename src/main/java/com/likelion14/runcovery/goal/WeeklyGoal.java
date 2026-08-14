@@ -5,6 +5,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -36,6 +39,10 @@ public class WeeklyGoal {
 
     @Column(nullable = false)
     private Integer expectedCalories;
+
+    @CreationTimestamp
+    @Column(nullable = false, updatable = false)
+    private LocalDateTime createdAt;
 
     public WeeklyGoal(User user, FutureGoal futureGoal, Integer weekNo, String weeklyGoal,
                        Integer weeklyGoalDistance, Integer expectedCalories) {

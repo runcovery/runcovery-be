@@ -45,11 +45,11 @@ INSERT IGNORE INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('LOWER_ARM_L', '아래팔', 'LEFT', NULL),
 ('LOWER_ARM_R', '아래팔', 'RIGHT', NULL);
 
-INSERT IGNORE INTO future_goal (future_id, user_id, scene, target_distance, target_period, weekly_frequency, available_time, achievement_rate) VALUES
-(1, 1, '계단을 올라도 숨이 차지 않는 나', 5, 3, 2, 15, 0);
+INSERT IGNORE INTO future_goal (future_id, user_id, scene, target_distance, target_period, weekly_frequency, available_time, achievement_rate, created_at) VALUES
+(1, 1, '계단을 올라도 숨이 차지 않는 나', 5, 3, 2, 15, 0, '2026-08-09 09:00:00');
 
-INSERT IGNORE INTO weekly_goal (week_id, user_id, future_id, week_no, weekly_goal, weekly_goal_distance, expected_calories) VALUES
-(1, 1, 1, 1, '목표 페이스 체감하기 및 기초 체력 향상', 11, 2800);
+INSERT IGNORE INTO weekly_goal (week_id, user_id, future_id, week_no, weekly_goal, weekly_goal_distance, expected_calories, created_at) VALUES
+(1, 1, 1, 1, '목표 페이스 체감하기 및 기초 체력 향상', 11, 2800, '2026-08-09 09:00:00');
 
 INSERT IGNORE INTO weekly_schedule (training_id, week_id, training_content) VALUES
 (1, 1, '중강도 조깅 (야외 평지)'),
