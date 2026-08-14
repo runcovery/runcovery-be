@@ -10,8 +10,8 @@ import com.likelion14.runcovery.mission.MissionRepository;
 import com.likelion14.runcovery.mission.TodayMission;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
-import com.likelion14.runcovery.wellness.Prescription;
-import com.likelion14.runcovery.wellness.PrescriptionRepository;
+import com.likelion14.runcovery.wellness.entity.Prescription;
+import com.likelion14.runcovery.wellness.repository.PrescriptionRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -109,7 +109,7 @@ public class HomeService {
         return """
         사용자의 오늘 상태에 맞는 웰니스 팁을 한 문장으로 생성해주세요.
         반드시 한 문장으로만 응답하세요. 다른 텍스트나 마크다운은 포함하지 마세요.
-        친근한 해요체로 추천해주세요.
+        친근한 느낌으로 "추천드려요"로 문장을 끝내주세요.
         """;
     }
 
