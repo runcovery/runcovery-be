@@ -50,6 +50,9 @@ public class TodayMission {
 
     private Boolean isRest = false;
 
+    @Column
+    private Long activityId;
+
     public TodayMission(TodayCondition todayCondition, WeeklyGoal weeklyGoal, LocalDate missionDate,
                          String recommendedIntensity, String recommendedTime, String recommendedZone,
                          String recommendedZoneDesc, String detailComment) {
