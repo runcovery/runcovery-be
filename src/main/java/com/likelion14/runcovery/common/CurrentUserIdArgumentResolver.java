@@ -19,7 +19,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CurrentUserIdArgumentResolver implements HandlerMethodArgumentResolver {
 
-    private static final String HEADER_NAME = "X-User-Id";
+    private static final String HEADER_NAME = "X-Public-Id";
 
     private final UserRepository userRepository;
 
