@@ -30,4 +30,10 @@ public class UserController {
     public ApiResponse<UserResponseDto> getMyInfo() {
         return ApiResponse.ok(userService.getMyInfo(AppConstants.DEFAULT_USER_ID));
     }
+
+    // 마이페이지
+    @GetMapping("/mypage")
+    public ApiResponse<MyStatsResponseDto> getMyStats() {
+        return ApiResponse.ok(userService.getMyStats());
+    }
 }

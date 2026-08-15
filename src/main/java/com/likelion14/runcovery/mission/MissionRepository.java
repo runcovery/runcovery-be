@@ -20,4 +20,7 @@ public interface MissionRepository extends JpaRepository<TodayMission, Long> {
 
     long countByIsCompletedTrue();
 
+    // 이번주 완료된 미션 목록 조회
+    List<TodayMission> findByMissionDateBetweenAndIsCompletedTrue(LocalDate start, LocalDate end);
+
 }

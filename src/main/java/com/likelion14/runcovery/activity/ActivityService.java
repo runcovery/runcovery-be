@@ -33,6 +33,7 @@ public class ActivityService {
         ActivitySyncResponseDto.MissionInfo missionInfo = null;
         if (mission != null) {
             mission.complete();
+            mission.setActivityId(activityRecord.getId());
             missionInfo = new ActivitySyncResponseDto.MissionInfo(mission.getId(), true);
         }
 
