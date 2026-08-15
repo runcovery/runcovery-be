@@ -1,7 +1,7 @@
 package com.likelion14.runcovery.user;
 
-import com.likelion14.runcovery.common.AppConstants;
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.common.CurrentUserId;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,8 +27,8 @@ public class UserController {
 
     // 유저 조회
     @GetMapping("/me")
-    public ApiResponse<UserResponseDto> getMyInfo() {
-        return ApiResponse.ok(userService.getMyInfo(AppConstants.DEFAULT_USER_ID));
+    public ApiResponse<UserResponseDto> getMyInfo(@CurrentUserId Long userId) {
+        return ApiResponse.ok(userService.getMyInfo(userId));
     }
 
     // 마이페이지
