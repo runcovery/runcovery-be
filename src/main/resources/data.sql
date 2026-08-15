@@ -61,8 +61,11 @@ INSERT IGNORE INTO weekly_schedule (training_id, week_id, training_content) VALU
 INSERT IGNORE INTO today_condition (condition_id, user_id, condition_date, sleep_quality, body_condition, condition_title, condition_feedback, is_checked) VALUES
     (1, 1, '2026-08-09', 'GOOD', 'GOOD', '최고의 컨디션이에요!', '["수면 7시간 이상, 폭 자서 개운해요.","최근 4일 운동 2회로 몸이 활기차요.","아픈 곳이 없어서 최상의 컨디션이에요."]', TRUE);
 
-INSERT IGNORE INTO today_mission (mission_id, condition_id, week_id, mission_date, recommended_intensity, recommended_time, recommended_zone, recommended_zone_desc, detail_comment, is_completed, is_rest) VALUES
-(1, 1, 1, '2026-08-09', '권장 강도 | 중 · 고강도 러닝', '20분 내외로 도전해보세요.', 'Zone 3~4', '편안하게 대화할 수 있는 강도', '워밍업(5분)-메인(10분)-쿨다움(5분)', FALSE, FALSE);
+# INSERT IGNORE INTO today_mission (mission_id, condition_id, week_id, mission_date, recommended_intensity, recommended_time, recommended_zone, recommended_zone_desc, detail_comment, is_completed, is_rest) VALUES
+# (1, 1, 1, '2026-08-09', '권장 강도 | 중 · 고강도 러닝', '20분 내외로 도전해보세요.', 'Zone 3~4', '편안하게 대화할 수 있는 강도', '워밍업(5분)-메인(10분)-쿨다움(5분)', FALSE, FALSE);
+
+INSERT IGNORE INTO today_mission (mission_id, condition_id, week_id, mission_date, recommended_intensity, recommended_time, recommended_zone, recommended_zone_desc, detail_comment, is_completed, is_rest, activity_id) VALUES
+    (1, 1, 1, '2026-08-09', '권장 강도 | 중 · 고강도 러닝', '20분 내외로 도전해보세요.', 'Zone 3~4', '편안하게 대화할 수 있는 강도', '워밍업(5분)-메인(10분)-쿨다움(5분)', FALSE, FALSE, NULL);
 
 # INSERT IGNORE INTO activity_record (record_id, user_id, running_duration, record_date, distance_m, avg_pace, avg_heart_rate, max_heart_rate, calories, cadence, start_time, end_time) VALUES
 # (1, 1, 53, '2026-08-08', 5000, 360, 145, 165, 350, 160, '2026-08-08 08:00:00', '2026-08-08 08:53:00');
