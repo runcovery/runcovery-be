@@ -1,6 +1,7 @@
 package com.likelion14.runcovery.wellness.repository;
 
 import com.likelion14.runcovery.wellness.entity.Prescription;
+import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
@@ -33,7 +34,14 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
             Long userId
     );
 
+    Optional<Prescription> findByWellnessReport_IdAndWellnessReport_ActivityRecord_User_IdAndCategory(
+            Long reportId,
+            Long userId,
+            PrescriptionCategory category
+    );
     List<Prescription> findByPrescriptionDate(LocalDate prescriptionDate);
+}
+
 
     // 이번주 카테고리별 생성된 처방전 수
     int countByPrescriptionDateBetweenAndCategory(LocalDate start, LocalDate end, PrescriptionCategory category);

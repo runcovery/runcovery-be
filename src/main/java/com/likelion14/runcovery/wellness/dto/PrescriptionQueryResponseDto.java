@@ -34,6 +34,16 @@ public final class PrescriptionQueryResponseDto {
     @Getter
     @Builder
     @AllArgsConstructor
+    public static class Completion {
+        private Long prescriptionId;
+        private Long reportId;
+        private PrescriptionCategory category;
+        private String categoryName;
+        private Boolean isCompleted;
+    }
+    @Getter
+    @Builder
+    @AllArgsConstructor
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class Detail {
