@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 @Entity
 @Table(name = "users")
@@ -18,6 +19,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "user_id")
     private Long id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private UUID publicId;
 
     @Column(nullable = false, length = 50)
     private String nickname;
@@ -43,8 +47,9 @@ public class User {
     @Column(nullable = false, precision = 4, scale = 2)
     private BigDecimal avgSleepHours;
 
-    public User(String nickname, Integer age, String gender, BigDecimal height, BigDecimal weight,
+    public User(UUID publicId, String nickname, Integer age, String gender, BigDecimal height, BigDecimal weight,
                 String runningExperience, Integer maxRunDuration, BigDecimal avgSleepHours) {
+        this.publicId = publicId;
         this.nickname = nickname;
         this.age = age;
         this.gender = gender;

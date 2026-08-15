@@ -1,5 +1,5 @@
-INSERT IGNORE INTO users (user_id, nickname, age, gender, height, weight, running_experience, max_run_duration, avg_sleep_hours) VALUES
-(1, '강냉이', 22, '남성', 175.0, 70.0, '뛰다가 오래 쉬었어요.', 30, 7.00);
+INSERT IGNORE INTO users (user_id, public_id, nickname, age, gender, height, weight, running_experience, max_run_duration, avg_sleep_hours) VALUES
+(1, '11111111-1111-1111-1111-111111111111', '강냉이', 22, '남성', 175.0, 70.0, '뛰다가 오래 쉬었어요.', 30, 7.00);
 
 INSERT IGNORE INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('B_NECK', '뒷목', NULL, 'BACK'),
