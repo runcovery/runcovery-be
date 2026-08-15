@@ -1,5 +1,6 @@
 package com.likelion14.runcovery.activity;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -42,9 +43,11 @@ public class ActivityRequestDto {
     private LocalDateTime endTime;
 
     @NotNull(message = "위도는 필수입니다")
+    @Schema(example = "37.5665")
     private Double lat;
 
     @NotNull(message = "경도는 필수입니다")
+    @Schema(example = "126.9780")
     private Double lon;
 
 }
