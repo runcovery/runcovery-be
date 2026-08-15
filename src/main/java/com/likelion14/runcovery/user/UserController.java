@@ -2,6 +2,7 @@ package com.likelion14.runcovery.user;
 
 import com.likelion14.runcovery.common.ApiResponse;
 import com.likelion14.runcovery.common.CurrentUserId;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,7 +16,7 @@ public class UserController {
 
     private final UserService userService;
 
-    // 유저 등록
+    @Operation(summary = "유저/등록", tags = "1. User")
     @PostMapping
     public ResponseEntity<ApiResponse<UserCreateResponseDto>> createUser(
             @Valid @RequestBody UserCreateRequestDto request
@@ -25,13 +26,13 @@ public class UserController {
                 .body(ApiResponse.ok(response, HttpStatus.CREATED));
     }
 
-    // 유저 조회
+    @Operation(summary = "유저/조회", tags = "1. User")
     @GetMapping("/me")
     public ApiResponse<UserResponseDto> getMyInfo(@CurrentUserId Long userId) {
         return ApiResponse.ok(userService.getMyInfo(userId));
     }
 
-    // 마이페이지
+    @Operation(summary = "유저/마이페이지", tags = "1. User")
     @GetMapping("/mypage")
     public ApiResponse<MyStatsResponseDto> getMyStats() {
         return ApiResponse.ok(userService.getMyStats());

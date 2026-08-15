@@ -28,7 +28,7 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping("/api/wellness/reports")
 @RequiredArgsConstructor
-@Tag(name = "Running Report", description = "맞춤형 웰니스 러닝 리포트 API")
+@Tag(name = "6. Running Report", description = "맞춤형 웰니스 러닝 리포트 API")
 public class RunningReportController {
 
     private final RunningReportService runningReportService;
