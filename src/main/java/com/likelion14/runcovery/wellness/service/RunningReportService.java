@@ -16,10 +16,13 @@ import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
 import com.likelion14.runcovery.wellness.dto.ReportRequestDto;
 import com.likelion14.runcovery.wellness.dto.ReportResponseDto;
+import com.likelion14.runcovery.wellness.entity.Prescription;
 import com.likelion14.runcovery.wellness.entity.SkinRecord;
 import com.likelion14.runcovery.wellness.entity.WellnessReport;
+import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
 import com.likelion14.runcovery.wellness.enums.SkinRecordType;
 import com.likelion14.runcovery.wellness.enums.SweatStatus;
+import com.likelion14.runcovery.wellness.repository.PrescriptionRepository;
 import com.likelion14.runcovery.wellness.repository.SkinRecordQueryRepository;
 import com.likelion14.runcovery.wellness.repository.WellnessReportRepository;
 import lombok.RequiredArgsConstructor;
@@ -56,6 +59,7 @@ public class RunningReportService {
     private final BodyPartRepository bodyPartRepository;
     private final BodyIssueRepository bodyIssueRepository;
     private final WellnessReportRepository wellnessReportRepository;
+    private final PrescriptionRepository prescriptionRepository;
 
     /** 저장된 당일 데이터를 조회해 리포트만 생성합니다. */
     public ReportResponseDto generateReport(ReportRequestDto request) {
@@ -70,7 +74,8 @@ public class RunningReportService {
         synchronizeBodyIssues(context.user(), context.painfulParts());
 
         ReportResponseDto response = requestAiReport(request, context);
-        saveWellnessReport(context.activity(), response);
+        WellnessReport savedReport = saveWellnessReport(context.activity(), response);
+        savePrescriptions(savedReport, context.skinRecord(), response);
         return response;
     }
 
@@ -282,6 +287,82 @@ public class RunningReportService {
         return wellnessReportRepository.save(report);
     }
 
+    private void savePrescriptions(
+            WellnessReport wellnessReport,
+            SkinRecord skinRecord,
+            ReportResponseDto response
+    ) {
+        Prescription nutrition = createPrescription(
+                wellnessReport,
+                skinRecord,
+                PrescriptionCategory.NUTRITION,
+                response.getHydration(),
+                response.getHydration().getSolution(),
+                null,
+                null
+        );
+        Prescription skin = createPrescription(
+                wellnessReport,
+                skinRecord,
+                PrescriptionCategory.SKIN,
+                response.getSkin(),
+                response.getSkin().getSolution(),
+                null,
+                buildSkinResult(skinRecord)
+        );
+        Prescription stretch = createPrescription(
+                wellnessReport,
+                skinRecord,
+                PrescriptionCategory.STRETCH,
+                response.getStretching(),
+                buildStretchingDetail(response.getRecoveryVideo()),
+                response.getRecoveryVideo().getVideoUrl(),
+                null
+        );
+
+        prescriptionRepository.saveAll(List.of(nutrition, skin, stretch));
+    }
+
+    private Prescription createPrescription(
+            WellnessReport wellnessReport,
+            SkinRecord skinRecord,
+            PrescriptionCategory category,
+            ReportResponseDto.Prescription prescriptionResponse,
+            String detail,
+            String recommendedLink,
+            String skinResult
+    ) {
+        Prescription prescription = new Prescription(
+                wellnessReport,
+                skinRecord,
+                wellnessReport.getReportDate(),
+                category,
+                prescriptionResponse.getTitle(),
+                prescriptionResponse.getSolution()
+        );
+        prescription.setDetail(detail);
+        prescription.setRecommendedLink(recommendedLink);
+        prescription.setSkinResult(skinResult);
+        prescription.setIsCompleted(false);
+        return prescription;
+    }
+
+    private String buildStretchingDetail(ReportResponseDto.RecoveryVideo recoveryVideo) {
+        return recoveryVideo.getSteps().stream()
+                .map(step -> step.getLabel() + ": " + step.getDescription())
+                .collect(Collectors.joining(System.lineSeparator()));
+    }
+
+    private String buildSkinResult(SkinRecord skinRecord) {
+        return "totalScore=" + skinRecord.getTotalScore()
+                + ", redness=" + skinRecord.getRedness()
+                + ", oiliness=" + skinRecord.getOiliness()
+                + ", texture=" + skinRecord.getTexture()
+                + ", pores=" + skinRecord.getPores()
+                + ", blemishes=" + skinRecord.getBlemishes()
+                + ", hydration=" + skinRecord.getHydration()
+                + ", pigment=" + skinRecord.getPigment();
+    }
     private HydrationEstimate estimateHydrationLoss(
             ActivityRecord activity,
             WeatherResponseDto weather,
