@@ -40,7 +40,7 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
             PrescriptionCategory category
     );
     List<Prescription> findByPrescriptionDate(LocalDate prescriptionDate);
-}
+
 
 
     // 이번주 카테고리별 생성된 처방전 수
@@ -53,3 +53,4 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
     List<Prescription> findByPrescriptionDateBetweenAndCategory(LocalDate start, LocalDate end, PrescriptionCategory category);
 
 }
+
