@@ -2,6 +2,7 @@ package com.likelion14.runcovery.wellness.service;
 
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.wellness.dto.PrescriptionQueryResponseDto;
+import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
 import com.likelion14.runcovery.activity.ActivityRecord;
 import com.likelion14.runcovery.wellness.entity.Prescription;
 import com.likelion14.runcovery.wellness.entity.SkinRecord;
@@ -59,6 +60,44 @@ public class PrescriptionQueryService {
         return toDetail(prescription);
     }
 
+    @Transactional
+    public PrescriptionQueryResponseDto.Completion updateCompletion(
+            Long userId,
+            Long reportId,
+            PrescriptionCategory category,
+            Boolean isCompleted
+    ) {
+        validateUserId(userId);
+        if (category == null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "처방전 카테고리는 필수입니다.");
+        }
+        if (isCompleted == null) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "isCompleted 값은 필수입니다.");
+        }
+
+        Long targetReportId = resolveReportId(userId, reportId);
+        Prescription prescription = prescriptionRepository
+                .findByWellnessReport_IdAndWellnessReport_ActivityRecord_User_IdAndCategory(
+                        targetReportId,
+                        userId,
+                        category
+                )
+                .orElseThrow(() -> new CustomException(
+                        HttpStatus.NOT_FOUND,
+                        toCategoryName(category) + " 처방전을 찾을 수 없습니다."
+                ));
+
+        prescription.setIsCompleted(isCompleted);
+        Prescription savedPrescription = prescriptionRepository.save(prescription);
+
+        return PrescriptionQueryResponseDto.Completion.builder()
+                .prescriptionId(savedPrescription.getId())
+                .reportId(savedPrescription.getWellnessReport().getId())
+                .category(savedPrescription.getCategory())
+                .categoryName(toCategoryName(savedPrescription.getCategory()))
+                .isCompleted(Boolean.TRUE.equals(savedPrescription.getIsCompleted()))
+                .build();
+    }
     private Long resolveReportId(Long userId, Long reportId) {
         if (reportId == null) {
             return wellnessReportRepository
@@ -210,7 +249,7 @@ public class PrescriptionQueryService {
                 : prescription.getDetail();
     }
 
-    private String toCategoryName(com.likelion14.runcovery.wellness.enums.PrescriptionCategory category) {
+    private String toCategoryName(PrescriptionCategory category) {
         return switch (category) {
             case NUTRITION -> "수분/영양";
             case SKIN -> "피부";
