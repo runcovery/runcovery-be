@@ -23,7 +23,7 @@ import java.util.List;
 @RestController
 @RequestMapping({"/api/wellness/prescriptions", "/wellness/prescriptions"})
 @RequiredArgsConstructor
-@Tag(name = "Wellness Prescription", description = "맞춤형 웰니스 처방전 API")
+@Tag(name = "8. Wellness Prescription", description = "맞춤형 웰니스 처방전 API")
 public class PrescriptionController {
 
     private final PrescriptionQueryService prescriptionQueryService;
