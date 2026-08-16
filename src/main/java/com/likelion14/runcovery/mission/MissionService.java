@@ -159,7 +159,9 @@ public class MissionService {
     }
 
     private String buildUserPrompt(User user, Condition condition,
-                                   WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather) {
+                                   WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather,
+                                   int currentMaxDuration) {
+        String maxDurationText = currentMaxDuration == 0 ? "기록 없음" : currentMaxDuration + "분";
         return String.format("""
                         사용자 정보: %s, %d세, %.1fkg 최근 최대 러닝 지속 시간: %s
                         몸 상태: %s
