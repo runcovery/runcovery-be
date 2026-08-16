@@ -34,7 +34,7 @@ public class UserController {
 
     @Operation(summary = "유저/마이페이지", tags = "1. User")
     @GetMapping("/mypage")
-    public ApiResponse<MyStatsResponseDto> getMyStats() {
-        return ApiResponse.ok(userService.getMyStats());
+    public ApiResponse<MyStatsResponseDto> getMyStats(@CurrentUserId Long userId) {
+        return ApiResponse.ok(userService.getMyStats(userId));
     }
 }

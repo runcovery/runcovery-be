@@ -1,6 +1,6 @@
 package com.likelion14.runcovery.mission;
 
-import com.likelion14.runcovery.condition.TodayCondition;
+import com.likelion14.runcovery.condition.Condition;
 import com.likelion14.runcovery.goal.WeeklyGoal;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
-public class TodayMission {
+public class Mission {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -22,7 +22,7 @@ public class TodayMission {
 
     @ManyToOne
     @JoinColumn(name = "condition_id", nullable = false)
-    private TodayCondition todayCondition;
+    private Condition condition;
 
     @ManyToOne
     @JoinColumn(name = "week_id", nullable = false)
@@ -53,10 +53,10 @@ public class TodayMission {
     @Column
     private Long activityId;
 
-    public TodayMission(TodayCondition todayCondition, WeeklyGoal weeklyGoal, LocalDate missionDate,
-                         String recommendedIntensity, String recommendedTime, String recommendedZone,
-                         String recommendedZoneDesc, String detailComment) {
-        this.todayCondition = todayCondition;
+    public Mission(Condition condition, WeeklyGoal weeklyGoal, LocalDate missionDate,
+                   String recommendedIntensity, String recommendedTime, String recommendedZone,
+                   String recommendedZoneDesc, String detailComment) {
+        this.condition = condition;
         this.weeklyGoal = weeklyGoal;
         this.missionDate = missionDate;
         this.recommendedIntensity = recommendedIntensity;

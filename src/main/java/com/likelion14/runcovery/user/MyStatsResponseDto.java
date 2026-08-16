@@ -4,6 +4,7 @@ package com.likelion14.runcovery.user;
 import java.util.List;
 
 public record MyStatsResponseDto (
+        long userId,
 
         String nickname,
         int totalCalories,

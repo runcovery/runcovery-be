@@ -19,8 +19,8 @@ public interface ActivityRecordRepository extends JpaRepository<ActivityRecord, 
     // 최근 10회 러닝 기록 (최대 거리 계산용)
     List<ActivityRecord> findTop10ByUserOrderByRecordDateDesc(User user);
 
-    // 주간 소모 칼로리 조회
+    // 유저의 이번주 완료된 미션 기반 소모 칼로리 합계 조회
     @Query("SELECT COALESCE(SUM(a.calories), 0) FROM ActivityRecord a WHERE a.id IN " +
-            "(SELECT m.activityId FROM TodayMission m WHERE m.missionDate BETWEEN :start AND :end AND m.isCompleted = true)")
-    int sumCaloriesByCompletedMissionsThisWeek(@Param("start") LocalDate start, @Param("end") LocalDate end);
+            "(SELECT m.activityId FROM Mission m WHERE m.missionDate BETWEEN :start AND :end AND m.isCompleted = true AND m.condition.user = :user)")
+    int sumCaloriesByCompletedMissionsThisWeek(@Param("user") User user, @Param("start") LocalDate start, @Param("end") LocalDate end);
 }
