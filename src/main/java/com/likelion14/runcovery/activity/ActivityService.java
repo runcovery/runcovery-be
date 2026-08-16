@@ -22,8 +22,8 @@ public class ActivityService {
 
     // 활동 데이터 동기화 (저장/업데이트) 및 미션 완료 처리
     @Transactional
-    public ActivitySyncResponseDto syncActivity(ActivityRequestDto request) {
-        User user = userRepository.findById(1L)
+    public ActivitySyncResponseDto syncActivity(long userId, ActivityRequestDto request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         ActivityRecord activityRecord = saveOrUpdateActivity(user, request);
@@ -41,25 +41,12 @@ public class ActivityService {
     }
 
     // 오늘 날짜 기준 활동 기록 조회
-    public ActivityRecordResponseDto getTodayActivity() {
-        LocalDate today = LocalDate.now();
-        User user = userRepository.findById(1L)
+    public ActivityRecordResponseDto getTodayActivity(long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
-        return activityRecordRepository.findByUserAndRecordDate(user, today)
-                .map(record -> new ActivityRecordResponseDto(
-                        record.getId(),
-                        record.getRunningDuration(),
-                        record.getRecordDate(),
-                        record.getDistanceM(),
-                        record.getAvgPace(),
-                        record.getAvgHeartRate(),
-                        record.getMaxHeartRate(),
-                        record.getCalories(),
-                        record.getCadence(),
-                        record.getStartTime(),
-                        record.getEndTime()
-                ))
+        return activityRecordRepository.findByUserAndRecordDate(user, LocalDate.now())
+                .map(ActivityRecordResponseDto::from)
                 .orElse(null);
     }
 
