@@ -67,7 +67,7 @@ public class UserService {
     }
 
     @Transactional
-    public MyStatsResponseDto getMyStats() {
+    public MyStatsResponseDto getMyStats(long userId) {
 
         LocalDate today = LocalDate.now();
         LocalDate start = today.with(DayOfWeek.MONDAY);
@@ -75,7 +75,7 @@ public class UserService {
         LocalDate startOfMonth = today.withDayOfMonth(1);
 
         // 유저 조회
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다."));
 
         // 주간 목표 조회
@@ -83,10 +83,10 @@ public class UserService {
         int totalCalories = weeklyGoal != null ? weeklyGoal.getExpectedCalories() : 0;
 
         // 주간 소모 칼로리
-        int burnedCalories = activityRecordRepository.sumCaloriesByCompletedMissionsThisWeek(start, end);
+        int burnedCalories = activityRecordRepository.sumCaloriesByCompletedMissionsThisWeek(user, start, end);
 
         // 주간 미션 현황
-        List<Mission> completedMissions = missionRepository.findByMissionDateBetweenAndIsCompletedTrue(start, end);
+        List<Mission> completedMissions = missionRepository.findByConditionUserAndMissionDateBetweenAndIsCompletedTrue(user, start, end);
         List<String> successDays = completedMissions.stream()
                 .map(m -> m.getMissionDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH).toUpperCase())
                 .toList();
@@ -98,13 +98,13 @@ public class UserService {
         int conditionRate = totalCondition == 0 ? 0 : (int) Math.min((double) checkedCondition / totalCondition * 100, 100);
 
         // 이번주 피부 달성률
-        int totalSkin = prescriptionRepository.countByPrescriptionDateBetweenAndCategory(start, end, PrescriptionCategory.SKIN);
-        int completedSkin = prescriptionRepository.countByPrescriptionDateBetweenAndCategoryAndIsCompletedTrue(start, end, PrescriptionCategory.SKIN);
+        int totalSkin = prescriptionRepository.countBySkinRecordUserAndPrescriptionDateBetweenAndCategory(user, start, end, PrescriptionCategory.SKIN);
+        int completedSkin = prescriptionRepository.countBySkinRecordUserAndPrescriptionDateBetweenAndCategoryAndIsCompletedTrue(user, start, end, PrescriptionCategory.SKIN);
         int skinRate = totalSkin == 0 ? 0 : (int) Math.min((double) completedSkin / totalSkin * 100, 100);
 
         // 이번주 스트레칭 달성률
-        int totalStretch = prescriptionRepository.countByPrescriptionDateBetweenAndCategory(start, end, PrescriptionCategory.STRETCH);
-        int completedStretch = prescriptionRepository.countByPrescriptionDateBetweenAndCategoryAndIsCompletedTrue(start, end, PrescriptionCategory.STRETCH);
+        int totalStretch = prescriptionRepository.countBySkinRecordUserAndPrescriptionDateBetweenAndCategory(user, start, end, PrescriptionCategory.STRETCH);
+        int completedStretch = prescriptionRepository.countBySkinRecordUserAndPrescriptionDateBetweenAndCategoryAndIsCompletedTrue(user, start, end, PrescriptionCategory.STRETCH);
         int stretchRate = totalStretch == 0 ? 0 : (int) Math.min((double) completedStretch / totalStretch * 100, 100);
 
         // 이번달 피부 점수
@@ -115,20 +115,21 @@ public class UserService {
                 .toList();
 
         // 사후관리 피드백 (AI)
-        List<Prescription> skinPrescriptions = prescriptionRepository
-                .findByPrescriptionDateBetweenAndCategory(start, end, PrescriptionCategory.SKIN);
-        List<Prescription> stretchPrescriptions = prescriptionRepository
-                .findByPrescriptionDateBetweenAndCategory(start, end, PrescriptionCategory.STRETCH);
+        List<Prescription> skinPrescriptions = prescriptionRepository.findBySkinRecordUserAndPrescriptionDateBetweenAndCategory(user, start, end, PrescriptionCategory.SKIN);
+        List<Prescription> stretchPrescriptions = prescriptionRepository.findBySkinRecordUserAndPrescriptionDateBetweenAndCategory(user, start, end, PrescriptionCategory.STRETCH);
 
         String postCareFeedback = (skinPrescriptions.isEmpty() && stretchPrescriptions.isEmpty())
                 ? "이번주 사후관리 처방 내역이 없어요. 러닝 후 리포트를 받아보세요."
                 : openAiService.getTextCompletion(buildSystemPrompt(),
                 buildPostCareFeedbackPrompt(conditionRate, skinPrescriptions, stretchPrescriptions));
+//        String postCareFeedback = (skinPrescriptions.isEmpty() && stretchPrescriptions.isEmpty())
+//                ? "이번주 사후관리 처방 내역이 없어요. 러닝 후 리포트를 받아보세요."
+//                : "생성예정";
 
         MyStatsResponseDto.PostCareStats postCare = new MyStatsResponseDto.PostCareStats(
                 conditionRate, skinRate, stretchRate, postCareFeedback);
 
-        return new MyStatsResponseDto(user.getNickname(), totalCalories, burnedCalories, weeklyMission, postCare, monthlySkinScores);
+        return new MyStatsResponseDto(userId, user.getNickname(), totalCalories, burnedCalories, weeklyMission, postCare, monthlySkinScores);
     }
 
     private String buildSystemPrompt() {

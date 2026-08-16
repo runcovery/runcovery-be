@@ -36,6 +36,7 @@ public class HomeService {
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
 
+    @Transactional
     public HomeResponseDto getHome(long userId, double lat, double lon) {
 
         LocalDate today = LocalDate.now();

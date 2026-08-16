@@ -27,8 +27,7 @@ public interface MissionRepository extends JpaRepository<Mission, Long> {
     long countByUserAndIsCompletedTrueAndMissionDateAfter(@Param("user") User user, @Param("startDate") LocalDate startDate);
 
     // 이번주 완료된 미션 목록 조회
-    List<Mission> findByMissionDateBetweenAndIsCompletedTrue(LocalDate start, LocalDate end);
-
+    List<Mission> findByConditionUserAndMissionDateBetweenAndIsCompletedTrue(User user, LocalDate start, LocalDate end);
     // 유저와 미션 날짜로 오늘의 미션 조회
     Optional<Mission> findByConditionUserAndMissionDate(User user, LocalDate missionDate);
 

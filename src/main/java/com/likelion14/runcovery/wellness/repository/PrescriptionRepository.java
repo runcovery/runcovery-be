@@ -45,17 +45,16 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
     List<Prescription> findByPrescriptionDate(LocalDate prescriptionDate);
 
 
-    // 이번주 카테고리별 생성된 처방전 수
-    int countByPrescriptionDateBetweenAndCategory(LocalDate start, LocalDate end, PrescriptionCategory category);
-
-    // 이번주 카테고리별 완료된 처방전 수
-    int countByPrescriptionDateBetweenAndCategoryAndIsCompletedTrue(LocalDate start, LocalDate end, PrescriptionCategory category);
-
-    // 카테고리별 처방전 목록 조회
-    List<Prescription> findByPrescriptionDateBetweenAndCategory(LocalDate start, LocalDate end, PrescriptionCategory category);
-
     // 유저별 처방전 조회
     List<Prescription> findBySkinRecordUserAndPrescriptionDate(User user, LocalDate prescriptionDate);
 
+    // 유저의 기간별 카테고리 처방전 수 조회
+    int countBySkinRecordUserAndPrescriptionDateBetweenAndCategory(User user, LocalDate start, LocalDate end, PrescriptionCategory category);
+
+    // 유저의 기간별 카테고리 완료된 처방전 수 조회
+    int countBySkinRecordUserAndPrescriptionDateBetweenAndCategoryAndIsCompletedTrue(User user, LocalDate start, LocalDate end, PrescriptionCategory category);
+
+    // 유저의 기간별 카테고리 처방전 목록 조회
+    List<Prescription> findBySkinRecordUserAndPrescriptionDateBetweenAndCategory(User user, LocalDate start, LocalDate end, PrescriptionCategory category);
 }
 
