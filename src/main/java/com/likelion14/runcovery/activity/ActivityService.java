@@ -2,13 +2,13 @@ package com.likelion14.runcovery.activity;
 
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.mission.MissionRepository;
-import com.likelion14.runcovery.mission.TodayMission;
+import com.likelion14.runcovery.mission.Mission;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -22,16 +22,16 @@ public class ActivityService {
 
     // 활동 데이터 동기화 (저장/업데이트) 및 미션 완료 처리
     @Transactional
-    public ActivitySyncResponseDto syncActivity(ActivityRequestDto request) {
-        User user = userRepository.findById(1L)
+    public ActivitySyncResponseDto syncActivity(long userId, ActivityRequestDto request) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         ActivityRecord activityRecord = saveOrUpdateActivity(user, request);
 
-        TodayMission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
+        Mission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
 
         ActivitySyncResponseDto.MissionInfo missionInfo = null;
-        if (mission != null) {
+        if (mission != null && !mission.getIsRest()) {
             mission.complete();
             mission.setActivityId(activityRecord.getId());
             missionInfo = new ActivitySyncResponseDto.MissionInfo(mission.getId(), true);
@@ -41,25 +41,12 @@ public class ActivityService {
     }
 
     // 오늘 날짜 기준 활동 기록 조회
-    public ActivityRecordResponseDto getTodayActivity() {
-        LocalDate today = LocalDate.now();
-        User user = userRepository.findById(1L)
+    public ActivityRecordResponseDto getTodayActivity(long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
-        return activityRecordRepository.findByUserAndRecordDate(user, today)
-                .map(record -> new ActivityRecordResponseDto(
-                        record.getId(),
-                        record.getRunningDuration(),
-                        record.getRecordDate(),
-                        record.getDistanceM(),
-                        record.getAvgPace(),
-                        record.getAvgHeartRate(),
-                        record.getMaxHeartRate(),
-                        record.getCalories(),
-                        record.getCadence(),
-                        record.getStartTime(),
-                        record.getEndTime()
-                ))
+        return activityRecordRepository.findByUserAndRecordDate(user, LocalDate.now())
+                .map(ActivityRecordResponseDto::from)
                 .orElse(null);
     }
 

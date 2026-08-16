@@ -7,7 +7,7 @@ import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
 import com.likelion14.runcovery.common.weather.WeatherService;
 import com.likelion14.runcovery.condition.ConditionRepository;
-import com.likelion14.runcovery.condition.TodayCondition;
+import com.likelion14.runcovery.condition.Condition;
 import com.likelion14.runcovery.goal.WeeklyGoal;
 import com.likelion14.runcovery.goal.WeeklyGoalRepository;
 import com.likelion14.runcovery.goal.WeeklySchedule;
@@ -18,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,16 +37,20 @@ public class MissionService {
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
 
-    public MissionResponseDto generateMission(double lat, double lon) {
+    @Transactional
+    public MissionResponseDto generateMission(long userId, double lat, double lon) {
 
         // 1. 유저 조회
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         // 2. 요청일 기준 컨디션 조회
         LocalDate today = LocalDate.now();
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
+        Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
+                .orElse(null);
+        if (condition == null) {
+            throw new CustomException(HttpStatus.NOT_FOUND, "오늘의 컨디션 분석을 먼저 해야합니다.");
+        }
 
         // 3. 주간 목표, 스케줄 조회
         WeeklyGoal weeklyGoal = weeklyGoalRepository.findTopByUserOrderByWeekNoDesc(user)
@@ -75,26 +80,28 @@ public class MissionService {
 
         log.info("OpenAI 응답 완료");
 
-        if (aiResult == null || aiResult.recommendedIntensity() == null) {
+        if (aiResult == null || aiResult.getRecommendedIntensity() == null) {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "AI 미션 생성에 실패했습니다.");
         }
 
         // 7. 응답 미션 저장
-        TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
+        Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
+
                 .map(existing -> {
-                    existing.update(today, aiResult.recommendedIntensity(), aiResult.recommendedTime(),
-                            aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
-                    existing.setIsRest(aiResult.isRest());
+                    existing.update(today, aiResult.getRecommendedIntensity(), aiResult.getRecommendedTime(),
+                            aiResult.getRecommendedZone(), aiResult.getRecommendedZoneDesc(), aiResult.getDetailComment());
+                    existing.setIsRest(aiResult.getIsRest());
                     return existing;
                 })
                 .orElseGet(() -> {
-                    TodayMission newMission = new TodayMission(condition, weeklyGoal, today,
-                            aiResult.recommendedIntensity(), aiResult.recommendedTime(),
-                            aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
-                    newMission.setIsRest(aiResult.isRest());
+                    Mission newMission = new Mission(condition, weeklyGoal, today,
+                            aiResult.getRecommendedIntensity(), aiResult.getRecommendedTime(),
+                            aiResult.getRecommendedZone(), aiResult.getRecommendedZoneDesc(), aiResult.getDetailComment());
+                    newMission.setIsRest(aiResult.getIsRest());
+                    if(aiResult.getIsRest()) newMission.setIsCompleted(true);
                     return newMission;
                 });
-        TodayMission savedMission = missionRepository.save(mission);
+        Mission savedMission = missionRepository.save(mission);
 
         log.info("미션 저장 완료");
 
@@ -102,22 +109,28 @@ public class MissionService {
         return MissionResponseDto.from(savedMission);
     }
 
-    public MissionResponseDto getTodayMission() {
+    public MissionResponseDto.Status getTodayMission(long userId) {
 
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         LocalDate today = LocalDate.now();
 
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
-
-        TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
+        Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .orElse(null);
 
-        if (mission == null) return null;
+        if (condition == null) {
+            return MissionResponseDto.Status.noCondition();
+        }
 
-        return MissionResponseDto.from(mission);
+        Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
+                .orElse(null);
+
+        if (mission == null) {
+            return MissionResponseDto.Status.noMission();
+        }
+
+        return MissionResponseDto.Status.hasMission(MissionResponseDto.from(mission));
     }
 
     private String buildSystemPrompt() {
@@ -145,7 +158,7 @@ public class MissionService {
                """;
     }
 
-    private String buildUserPrompt(User user, TodayCondition condition,
+    private String buildUserPrompt(User user, Condition condition,
                                    WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather,
                                    int currentMaxDuration) {
         String maxDurationText = currentMaxDuration == 0 ? "기록 없음" : currentMaxDuration + "분";

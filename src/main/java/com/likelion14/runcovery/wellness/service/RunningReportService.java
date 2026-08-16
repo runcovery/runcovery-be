@@ -13,7 +13,7 @@ import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
 import com.likelion14.runcovery.common.weather.WeatherService;
 import com.likelion14.runcovery.condition.ConditionRepository;
-import com.likelion14.runcovery.condition.TodayCondition;
+import com.likelion14.runcovery.condition.Condition;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
 import com.likelion14.runcovery.wellness.dto.ReportRequestDto;
@@ -103,7 +103,7 @@ public class RunningReportService {
                         HttpStatus.NOT_FOUND,
                         reportDate + " 날짜의 AFTER_RUN 피부 스캔 기록이 없습니다."
                 ));
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, reportDate)
+        Condition condition = conditionRepository.findByUserAndConditionDate(user, reportDate)
                 .orElseThrow(() -> new CustomException(
                         HttpStatus.NOT_FOUND,
                         reportDate + " 날짜의 수면 컨디션 기록이 없습니다."
@@ -694,7 +694,7 @@ public class RunningReportService {
             User user,
             ActivityRecord activity,
             SkinRecord skinRecord,
-            TodayCondition condition,
+            Condition condition,
             List<BodyPart> painfulParts,
             WeatherResponseDto weather,
             HydrationEstimate hydrationEstimate
