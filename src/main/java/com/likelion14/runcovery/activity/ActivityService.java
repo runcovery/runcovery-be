@@ -2,7 +2,7 @@ package com.likelion14.runcovery.activity;
 
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.mission.MissionRepository;
-import com.likelion14.runcovery.mission.TodayMission;
+import com.likelion14.runcovery.mission.Mission;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
 import jakarta.transaction.Transactional;
@@ -28,7 +28,7 @@ public class ActivityService {
 
         ActivityRecord activityRecord = saveOrUpdateActivity(user, request);
 
-        TodayMission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
+        Mission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
 
         ActivitySyncResponseDto.MissionInfo missionInfo = null;
         if (mission != null) {

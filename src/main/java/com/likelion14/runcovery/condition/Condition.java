@@ -6,15 +6,14 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.List;
 
 @Entity
 @Getter
 @Setter
 @NoArgsConstructor
-public class TodayCondition {
+@Table(name = "conditions")
+public class Condition {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -48,8 +47,8 @@ public class TodayCondition {
 
     private Boolean isChecked = false;
 
-    public TodayCondition(User user, LocalDate conditionDate, SleepQuality sleepQuality,
-                          BodyCondition bodyCondition) {
+    public Condition(User user, LocalDate conditionDate, SleepQuality sleepQuality,
+                     BodyCondition bodyCondition) {
         this.user = user;
         this.conditionDate = conditionDate;
         this.sleepQuality = sleepQuality;

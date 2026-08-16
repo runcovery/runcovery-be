@@ -7,7 +7,7 @@ import com.likelion14.runcovery.common.weather.WeatherService;
 import com.likelion14.runcovery.goal.FutureGoal;
 import com.likelion14.runcovery.goal.FutureGoalRepository;
 import com.likelion14.runcovery.mission.MissionRepository;
-import com.likelion14.runcovery.mission.TodayMission;
+import com.likelion14.runcovery.mission.Mission;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
 import com.likelion14.runcovery.wellness.entity.Prescription;
@@ -88,7 +88,7 @@ public class HomeService {
     // 상태에 따른 웰니스 팁 생성
     private String buildWellnessTip(LocalDate today, WeatherResponseDto weather) {
         List<Prescription> prescriptions = prescriptionRepository.findByPrescriptionDate(today);
-        TodayMission mission = missionRepository.findByMissionDate(today).orElse(null);
+        Mission mission = missionRepository.findByMissionDate(today).orElse(null);
 
         if (!prescriptions.isEmpty()) {
             // 처방전 리포트 생성 후
@@ -127,7 +127,7 @@ public class HomeService {
         );
     }
 
-    private String buildMissionPrompt(TodayMission mission) {
+    private String buildMissionPrompt(Mission mission) {
         return String.format("""
         오늘 미션: %s
         권장 시간: %s

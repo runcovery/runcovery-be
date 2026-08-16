@@ -25,7 +25,7 @@ public class MissionResponseDto {
         this.isRest = isRest;
     }
 
-    public static MissionResponseDto from(TodayMission mission) {
+    public static MissionResponseDto from(Mission mission) {
         return new MissionResponseDto(
                 mission.getId(),
                 mission.getRecommendedIntensity(),

@@ -21,6 +21,6 @@ public interface ActivityRecordRepository extends JpaRepository<ActivityRecord, 
 
     // 주간 소모 칼로리 조회
     @Query("SELECT COALESCE(SUM(a.calories), 0) FROM ActivityRecord a WHERE a.id IN " +
-            "(SELECT m.activityId FROM TodayMission m WHERE m.missionDate BETWEEN :start AND :end AND m.isCompleted = true)")
+            "(SELECT m.activityId FROM Mission m WHERE m.missionDate BETWEEN :start AND :end AND m.isCompleted = true)")
     int sumCaloriesByCompletedMissionsThisWeek(@Param("start") LocalDate start, @Param("end") LocalDate end);
 }

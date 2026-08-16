@@ -5,7 +5,7 @@ import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
 import com.likelion14.runcovery.common.weather.WeatherService;
 import com.likelion14.runcovery.condition.ConditionRepository;
-import com.likelion14.runcovery.condition.TodayCondition;
+import com.likelion14.runcovery.condition.Condition;
 import com.likelion14.runcovery.goal.WeeklyGoal;
 import com.likelion14.runcovery.goal.WeeklyGoalRepository;
 import com.likelion14.runcovery.goal.WeeklySchedule;
@@ -41,7 +41,7 @@ public class MissionService {
 
         // 2. 요청일 기준 컨디션 조회
         LocalDate today = LocalDate.now();
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
+        Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
 
         // 3. 주간 목표, 스케줄 조회
@@ -72,7 +72,7 @@ public class MissionService {
         }
 
         // 6. 응답 미션 저장
-        TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
+        Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
                 .map(existing -> {
                     existing.update(today, aiResult.recommendedIntensity(), aiResult.recommendedTime(),
                             aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
@@ -80,13 +80,13 @@ public class MissionService {
                     return existing;
                 })
                 .orElseGet(() -> {
-                    TodayMission newMission = new TodayMission(condition, weeklyGoal, today,
+                    Mission newMission = new Mission(condition, weeklyGoal, today,
                             aiResult.recommendedIntensity(), aiResult.recommendedTime(),
                             aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
                     newMission.setIsRest(aiResult.isRest());
                     return newMission;
                 });
-        TodayMission savedMission = missionRepository.save(mission);
+        Mission savedMission = missionRepository.save(mission);
 
         log.info("미션 저장 완료");
 
@@ -101,10 +101,10 @@ public class MissionService {
 
         LocalDate today = LocalDate.now();
 
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
+        Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
 
-        TodayMission mission = missionRepository.findByTodayConditionAndMissionDate(condition, today)
+        Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
                 .orElse(null);
 
         if (mission == null) return null;
@@ -137,7 +137,7 @@ public class MissionService {
                """;
     }
 
-    private String buildUserPrompt(User user, TodayCondition condition,
+    private String buildUserPrompt(User user, Condition condition,
                                    WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather) {
         return String.format("""
                         사용자 정보: %s, %d세, %.1fkg 최대 러닝 가능 시간: %d분

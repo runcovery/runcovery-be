@@ -54,12 +54,12 @@ public class ConditionService {
         // 3. condition entity 생성 및 저장, 컨디션 체크 여부 업데이트
         log.info("기존 컨디션 조회 결과: {}", conditionRepository.findByUserAndConditionDate(user, today).isPresent());
 
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
+        Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .map(existing -> {
                     existing.update(request.getSleepQuality(), request.getBodyCondition());
                     return existing;
                 })
-                .orElseGet(() -> new TodayCondition(user, today, request.getSleepQuality(), request.getBodyCondition()));
+                .orElseGet(() -> new Condition(user, today, request.getSleepQuality(), request.getBodyCondition()));
         conditionRepository.save(condition);
 
         // 4. OpenAI에 컨디션 분석 요청 (수면, 운동기록, 통증부위, 몸상태 전달)
@@ -85,7 +85,7 @@ public class ConditionService {
 
         LocalDate today = LocalDate.now();
 
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, today)
+        Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .or(() -> conditionRepository.findFirstByUserOrderByConditionDateDesc(user))
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "컨디션 기록이 없습니다."));
 

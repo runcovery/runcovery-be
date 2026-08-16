@@ -7,7 +7,7 @@ import com.likelion14.runcovery.condition.ConditionRepository;
 import com.likelion14.runcovery.goal.WeeklyGoal;
 import com.likelion14.runcovery.goal.WeeklyGoalRepository;
 import com.likelion14.runcovery.mission.MissionRepository;
-import com.likelion14.runcovery.mission.TodayMission;
+import com.likelion14.runcovery.mission.Mission;
 import com.likelion14.runcovery.wellness.entity.Prescription;
 import com.likelion14.runcovery.wellness.entity.SkinRecord;
 import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
@@ -86,7 +86,7 @@ public class UserService {
         int burnedCalories = activityRecordRepository.sumCaloriesByCompletedMissionsThisWeek(start, end);
 
         // 주간 미션 현황
-        List<TodayMission> completedMissions = missionRepository.findByMissionDateBetweenAndIsCompletedTrue(start, end);
+        List<Mission> completedMissions = missionRepository.findByMissionDateBetweenAndIsCompletedTrue(start, end);
         List<String> successDays = completedMissions.stream()
                 .map(m -> m.getMissionDate().getDayOfWeek().getDisplayName(TextStyle.SHORT, Locale.ENGLISH).toUpperCase())
                 .toList();
