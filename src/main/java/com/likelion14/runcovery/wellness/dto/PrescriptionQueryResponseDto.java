@@ -98,6 +98,9 @@ public final class PrescriptionQueryResponseDto {
         private String description;
         private List<Step> steps;
         private String recommendedLink;
+
+        /** body_part.body_name 기준으로 묶어 저장한 최대 2개의 그룹별 회복 영상입니다. */
+        private List<ReportResponseDto.RecoveryVideo> recoveryVideos;
     }
 
     @Getter

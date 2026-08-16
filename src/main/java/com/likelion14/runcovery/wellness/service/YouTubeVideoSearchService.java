@@ -34,6 +34,7 @@ public class YouTubeVideoSearchService {
     private static final int MAX_VIDEO_DURATION_SECONDS = 180;
     private static final int MAX_SEARCH_RESULTS = 20;
     private static final int MAX_DESCRIPTION_LENGTH = 1_000;
+    private static final int MAX_RECOVERY_VIDEOS = 2;
 
     private final WebClient.Builder webClientBuilder;
 
@@ -43,6 +44,84 @@ public class YouTubeVideoSearchService {
     @Value("${wellness.youtube.timeout:10s}")
     private Duration requestTimeout;
 
+    /**
+     * 상체·하체라는 큰 신체 그룹 단위로 최대 두 개의 회복 영상을 찾습니다.
+     * 같은 그룹의 통증 부위가 여러 개여도 영상은 하나만 반환하며,
+     * 상체와 하체가 함께 선택된 경우에만 영상이 두 개가 됩니다.
+     */
+    public List<VideoResult> findRecoveryVideos(List<BodyPart> painfulParts) {
+        List<BodyPart> safePainfulParts = painfulParts == null ? List.of() : painfulParts;
+        if (safePainfulParts.isEmpty()) {
+            return List.of(findRecoveryVideo(List.of()));
+        }
+
+        return buildRecoveryGroups(safePainfulParts).stream()
+                .limit(MAX_RECOVERY_VIDEOS)
+                .map(group -> findGroupRecoveryVideo(group.group(), group.bodyParts()))
+                .toList();
+    }
+
+    private VideoResult findGroupRecoveryVideo(RecoveryGroup group, List<BodyPart> bodyParts) {
+        try {
+            // 선택 부위를 모두 제목에서 확인할 수 있는 통합 영상을 우선 사용합니다.
+            return findRecoveryVideo(bodyParts);
+        } catch (CustomException exception) {
+            if (!isNoVideoFound(exception)) {
+                throw exception;
+            }
+            log.info("No exact {} recovery video found. Falling back to a group recovery video.", group);
+        }
+
+        // 같은 그룹의 부위가 많아도 영상 수를 늘리지 않고, 상체 또는 하체 공통 회복 영상을 하나만 사용합니다.
+        BodyPart groupPart = new BodyPart(
+                group == RecoveryGroup.LOWER_BODY ? "LOWER_BODY" : "UPPER_BODY",
+                group == RecoveryGroup.LOWER_BODY ? "하체" : "상체",
+                null,
+                null
+        );
+        VideoResult groupVideo = findRecoveryVideo(List.of(groupPart));
+        return applyCoverage(groupVideo, bodyParts);
+    }
+
+    private VideoResult applyCoverage(VideoResult video, List<BodyPart> bodyParts) {
+        List<String> coveredCodes = bodyParts.stream()
+                .filter(bodyPart -> isMentionedInMetadata(video, bodyPart))
+                .map(BodyPart::getBodyPartCode)
+                .distinct()
+                .toList();
+        List<String> uncoveredCodes = bodyPartCodes(bodyParts).stream()
+                .filter(code -> !coveredCodes.contains(code))
+                .toList();
+
+        return new VideoResult(
+                video.title(),
+                video.videoUrl(),
+                video.description(),
+                video.durationSeconds(),
+                bodyPartNames(bodyParts),
+                coveredCodes,
+                uncoveredCodes
+        );
+    }
+
+    private boolean isMentionedInMetadata(VideoResult video, BodyPart bodyPart) {
+        // 부위 포함 여부도 제목에서 확인된 경우에만 true로 표시합니다.
+        String searchableText = (video.title() == null ? "" : video.title())
+                .toLowerCase(Locale.ROOT);
+        List<String> keywords = new ArrayList<>();
+        if (bodyPart.getBodyName() != null && !bodyPart.getBodyName().isBlank()) {
+            keywords.add(bodyPart.getBodyName());
+        }
+        keywords.addAll(relevanceTerms(bodyPart.getBodyPartCode()));
+        return keywords.stream()
+                .map(keyword -> keyword.toLowerCase(Locale.ROOT))
+                .anyMatch(searchableText::contains);
+    }
+
+    private boolean isNoVideoFound(CustomException exception) {
+        return exception.getMessage() != null
+                && exception.getMessage().contains("검증된 스트레칭 영상을 찾지 못했습니다.");
+    }
     public VideoResult findRecoveryVideo(List<BodyPart> painfulParts) {
         if (apiKey == null || apiKey.isBlank()) {
             throw new CustomException(
@@ -110,7 +189,10 @@ public class YouTubeVideoSearchService {
                             decodeBasicHtmlEntities(candidate.title()),
                             "https://www.youtube.com/watch?v=" + candidate.videoId(),
                             abbreviate(candidate.description(), MAX_DESCRIPTION_LENGTH),
-                            candidate.durationSeconds()
+                            candidate.durationSeconds(),
+                            bodyPartNames(safePainfulParts),
+                            bodyPartCodes(safePainfulParts),
+                            List.of()
                     ))
                     .orElseThrow(() -> noVideoFound(safePainfulParts));
         } catch (CustomException exception) {
@@ -192,9 +274,9 @@ public class YouTubeVideoSearchService {
         if (requiredKeywordGroups.isEmpty()) {
             return true;
         }
-        String searchableText = ((candidate.title() == null ? "" : candidate.title())
-                + " "
-                + (candidate.description() == null ? "" : candidate.description()))
+        // 제목에 선택 부위가 드러난 영상만 통합 영상으로 인정합니다.
+        // 설명란의 단순 키워드 나열만으로 다른 부위까지 다룬다고 판단하지 않습니다.
+        String searchableText = (candidate.title() == null ? "" : candidate.title())
                 .toLowerCase(Locale.ROOT);
 
         return requiredKeywordGroups.stream()
@@ -235,6 +317,12 @@ public class YouTubeVideoSearchService {
 
     private List<String> primarySearchTerms(String bodyPartCode) {
         String code = bodyPartCode == null ? "" : bodyPartCode.toUpperCase(Locale.ROOT);
+        if (code.equals("LOWER_BODY")) {
+            return List.of("하체");
+        }
+        if (code.equals("UPPER_BODY")) {
+            return List.of("상체");
+        }
         if (code.contains("KNEE") && code.startsWith("B_")) {
             return List.of("햄스트링");
         }
@@ -264,9 +352,14 @@ public class YouTubeVideoSearchService {
         }
         return List.of();
     }
-
     private List<String> relevanceTerms(String bodyPartCode) {
         String code = bodyPartCode == null ? "" : bodyPartCode.toUpperCase(Locale.ROOT);
+        if (code.equals("LOWER_BODY")) {
+            return List.of("하체", "lower body");
+        }
+        if (code.equals("UPPER_BODY")) {
+            return List.of("상체", "upper body");
+        }
         if (code.contains("KNEE") && code.startsWith("B_")) {
             return List.of("오금", "햄스트링", "무릎 뒤", "hamstring");
         }
@@ -314,7 +407,76 @@ public class YouTubeVideoSearchService {
         }
         return List.of();
     }
+    private List<RecoveryVideoGroup> buildRecoveryGroups(List<BodyPart> painfulParts) {
+        Map<RecoveryGroup, List<BodyPart>> grouped = new LinkedHashMap<>();
+        for (BodyPart bodyPart : painfulParts) {
+            grouped.computeIfAbsent(classifyGroup(bodyPart), ignored -> new ArrayList<>()).add(bodyPart);
+        }
 
+        return grouped.entrySet().stream()
+                .sorted((left, right) -> Integer.compare(left.getKey().priority(), right.getKey().priority()))
+                .map(entry -> new RecoveryVideoGroup(entry.getKey(), List.copyOf(entry.getValue())))
+                .toList();
+    }
+
+    private RecoveryGroup classifyGroup(BodyPart bodyPart) {
+        return isLowerBody(bodyPart) ? RecoveryGroup.LOWER_BODY : RecoveryGroup.UPPER_BODY;
+    }
+
+    private boolean isLowerBody(BodyPart bodyPart) {
+        String bodyName = bodyPart == null || bodyPart.getBodyName() == null
+                ? ""
+                : bodyPart.getBodyName().replace(" ", "");
+        if (List.of("무릎", "오금", "허벅지", "종아리", "정강이", "발목", "발", "골반", "서혜부", "엉덩이", "둔근")
+                .stream()
+                .anyMatch(bodyName::contains)) {
+            return true;
+        }
+
+        // 마스터 데이터의 부위명이 비어 있거나 새 코드가 추가된 경우를 위한 보조 판별입니다.
+        String code = normalizedCode(bodyPart);
+        return code.contains("KNEE") || code.contains("THIGH") || code.contains("CALF")
+                || code.contains("SHIN") || code.contains("FOOT") || code.contains("ANKLE")
+                || code.contains("GLUTE") || code.contains("PELVIS") || code.contains("HIP");
+    }
+
+    private String normalizedCode(BodyPart bodyPart) {
+        return bodyPart == null || bodyPart.getBodyPartCode() == null
+                ? ""
+                : bodyPart.getBodyPartCode().toUpperCase(Locale.ROOT);
+    }
+
+    private List<String> bodyPartNames(List<BodyPart> bodyParts) {
+        return bodyParts.stream()
+                .filter(Objects::nonNull)
+                .map(bodyPart -> {
+                    List<String> details = new ArrayList<>();
+                    if (bodyPart.getSide() != null && !bodyPart.getSide().isBlank()) {
+                        details.add(bodyPart.getSide().trim());
+                    }
+                    if (bodyPart.getDirection() != null && !bodyPart.getDirection().isBlank()) {
+                        details.add(bodyPart.getDirection().trim());
+                    }
+                    if (bodyPart.getBodyName() != null && !bodyPart.getBodyName().isBlank()) {
+                        details.add(bodyPart.getBodyName().trim());
+                    }
+                    return String.join(" ", details);
+                })
+                .filter(name -> !name.isBlank())
+                .distinct()
+                .toList();
+    }
+
+    private List<String> bodyPartCodes(List<BodyPart> bodyParts) {
+        return bodyParts.stream()
+                .filter(Objects::nonNull)
+                .map(BodyPart::getBodyPartCode)
+                .filter(Objects::nonNull)
+                .map(String::trim)
+                .filter(code -> !code.isBlank())
+                .distinct()
+                .toList();
+    }
     private CustomException noVideoFound(List<BodyPart> painfulParts) {
         String target = painfulParts.isEmpty()
                 ? "전신"
@@ -364,10 +526,33 @@ public class YouTubeVideoSearchService {
             String title,
             String videoUrl,
             String description,
-            int durationSeconds
+            int durationSeconds,
+            List<String> targetParts,
+            List<String> coveredPainPartCodes,
+            List<String> uncoveredPainPartCodes
     ) {
     }
 
+    private enum RecoveryGroup {
+        LOWER_BODY(0),
+        UPPER_BODY(1);
+
+        private final int priority;
+
+        RecoveryGroup(int priority) {
+            this.priority = priority;
+        }
+
+        int priority() {
+            return priority;
+        }
+    }
+
+    private record RecoveryVideoGroup(
+            RecoveryGroup group,
+            List<BodyPart> bodyParts
+    ) {
+    }
     private record VideoCandidate(
             String videoId,
             String title,

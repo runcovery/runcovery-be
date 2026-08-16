@@ -1,7 +1,11 @@
 package com.likelion14.runcovery.wellness.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.wellness.dto.PrescriptionQueryResponseDto;
+import com.likelion14.runcovery.wellness.dto.ReportResponseDto;
 import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
 import com.likelion14.runcovery.activity.ActivityRecord;
 import com.likelion14.runcovery.wellness.entity.Prescription;
@@ -28,6 +32,7 @@ public class PrescriptionQueryService {
     private static final Pattern STEP_PATTERN =
             Pattern.compile("^(STEP\\s*\\d+)\\s*:?\\s*(.*)$", Pattern.CASE_INSENSITIVE);
 
+    private final ObjectMapper objectMapper;
     private final PrescriptionRepository prescriptionRepository;
     private final WellnessReportRepository wellnessReportRepository;
 
@@ -182,12 +187,28 @@ public class PrescriptionQueryService {
     }
 
     private PrescriptionQueryResponseDto.StretchingDetail toStretchingDetail(Prescription prescription) {
-        String description = detailOrSummary(prescription);
+        List<ReportResponseDto.RecoveryVideo> recoveryVideos = parseRecoveryVideos(prescription.getDetail());
+
         return PrescriptionQueryResponseDto.StretchingDetail.builder()
-                .description(description)
-                .steps(parseSteps(prescription.getDetail(), prescription.getSummary()))
+                .description(recoveryVideos.isEmpty() ? detailOrSummary(prescription) : prescription.getSummary())
                 .recommendedLink(prescription.getRecommendedLink())
+                .recoveryVideos(recoveryVideos)
                 .build();
+    }
+
+    private List<ReportResponseDto.RecoveryVideo> parseRecoveryVideos(String detail) {
+        if (isBlank(detail) || !detail.trim().startsWith("[")) {
+            return List.of();
+        }
+        try {
+            return objectMapper.readValue(
+                    detail,
+                    new TypeReference<List<ReportResponseDto.RecoveryVideo>>() {
+                    }
+            );
+        } catch (JsonProcessingException exception) {
+            return List.of();
+        }
     }
 
     private List<PrescriptionQueryResponseDto.Step> parseSteps(String detail, String fallback) {
