@@ -11,6 +11,7 @@ public record MissionResponseDto(
         String recommendedZoneDesc,
         String detailComment,
         Boolean isRest
+
 ) {
     public static MissionResponseDto from(Mission mission) {
         return new MissionResponseDto(
@@ -23,5 +24,22 @@ public record MissionResponseDto(
                 mission.getDetailComment(),
                 mission.getIsRest()
         );
+    }
+
+    public record Status(
+            String status,
+            MissionResponseDto mission
+    ) {
+        public static Status noCondition() { // 오늘의 컨디션
+            return new Status("NO_CONDITION", null);
+        }
+
+        public static Status noMission() {
+            return new Status("NO_MISSION", null);
+        }
+
+        public static Status hasMission(MissionResponseDto mission) {
+            return new Status("HAS_MISSION", mission);
+        }
     }
 }

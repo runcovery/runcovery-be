@@ -100,7 +100,7 @@ public class MissionService {
         return MissionResponseDto.from(savedMission);
     }
 
-    public MissionResponseDto getTodayMission(long userId) {
+    public MissionResponseDto.Status getTodayMission(long userId) {
 
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
@@ -108,14 +108,20 @@ public class MissionService {
         LocalDate today = LocalDate.now();
 
         Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
+                .orElse(null);
+
+        if (condition == null) {
+            return MissionResponseDto.Status.noCondition();
+        }
 
         Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
                 .orElse(null);
 
-        if (mission == null) return null;
+        if (mission == null) {
+            return MissionResponseDto.Status.noMission();
+        }
 
-        return MissionResponseDto.from(mission);
+        return MissionResponseDto.Status.hasMission(MissionResponseDto.from(mission));
     }
 
     private String buildSystemPrompt() {
