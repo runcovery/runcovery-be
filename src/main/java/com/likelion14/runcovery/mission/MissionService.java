@@ -33,16 +33,19 @@ public class MissionService {
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
 
-    public MissionResponseDto generateMission(double lat, double lon) {
+    public MissionResponseDto generateMission(long userId, double lat, double lon) {
 
         // 1. 유저 조회
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         // 2. 요청일 기준 컨디션 조회
         LocalDate today = LocalDate.now();
         Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 컨디션 기록이 없습니다."));
+                .orElse(null);
+        if (condition == null) {
+            throw new CustomException(HttpStatus.NOT_FOUND, "오늘의 컨디션 분석을 먼저 해야합니다.");
+        }
 
         // 3. 주간 목표, 스케줄 조회
         WeeklyGoal weeklyGoal = weeklyGoalRepository.findTopByUserOrderByWeekNoDesc(user)
@@ -94,9 +97,9 @@ public class MissionService {
         return MissionResponseDto.from(savedMission);
     }
 
-    public MissionResponseDto getTodayMission() {
+    public MissionResponseDto getTodayMission(long userId) {
 
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         LocalDate today = LocalDate.now();
