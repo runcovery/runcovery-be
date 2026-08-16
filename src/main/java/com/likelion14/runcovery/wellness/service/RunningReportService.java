@@ -1,5 +1,7 @@
 package com.likelion14.runcovery.wellness.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likelion14.runcovery.activity.ActivityRecord;
 import com.likelion14.runcovery.activity.ActivityRecordRepository;
 import com.likelion14.runcovery.body.BodyIssue;
@@ -49,6 +51,7 @@ public class RunningReportService {
     private static final SkinRecordType REPORT_SKIN_TYPE = SkinRecordType.AFTER_RUN;
     private static final int MAX_SAVED_COMMENT_LENGTH = 250;
 
+    private final ObjectMapper objectMapper;
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
     private final YouTubeVideoSearchService youTubeVideoSearchService;
@@ -210,14 +213,14 @@ public class RunningReportService {
 
     private ReportResponseDto requestAiReport(ReportRequestDto request, ReportContext context) {
         try {
-            YouTubeVideoSearchService.VideoResult verifiedVideo =
-                    youTubeVideoSearchService.findRecoveryVideo(context.painfulParts());
+            List<YouTubeVideoSearchService.VideoResult> verifiedVideos =
+                    youTubeVideoSearchService.findRecoveryVideos(context.painfulParts());
             ReportResponseDto response = openAiService.getStructuredCompletion(
                     buildSystemPrompt(),
-                    buildUserPrompt(request, context) + buildVerifiedVideoPrompt(verifiedVideo),
+                    buildUserPrompt(request, context) + buildVerifiedVideosPrompt(verifiedVideos),
                     ReportResponseDto.class
             );
-            validateAndNormalizeAiResponse(response, context.painfulParts(), verifiedVideo);
+            validateAndNormalizeAiResponse(response, context.painfulParts(), verifiedVideos);
             return response;
         } catch (CustomException exception) {
             throw exception;
@@ -230,7 +233,7 @@ public class RunningReportService {
     private void validateAndNormalizeAiResponse(
             ReportResponseDto response,
             List<BodyPart> painfulParts,
-            YouTubeVideoSearchService.VideoResult verifiedVideo
+            List<YouTubeVideoSearchService.VideoResult> verifiedVideos
     ) {
         if (response == null) {
             throw new CustomException(HttpStatus.BAD_GATEWAY, "AI 리포트 응답이 비어 있습니다.");
@@ -248,18 +251,89 @@ public class RunningReportService {
         validatePrescription(response.getSkin(), "피부");
         validatePrescription(response.getStretching(), "스트레칭");
 
-        ReportResponseDto.RecoveryVideo video = response.getRecoveryVideo();
-        if (video == null || video.getSteps() == null || video.getSteps().isEmpty()) {
-            throw new CustomException(HttpStatus.BAD_GATEWAY, "AI 리포트의 회복 스트레칭 단계가 누락되었습니다.");
-        }
+        // 회복 영상은 AI가 요약하거나 개수를 결정하지 않습니다.
+        // 서버가 body_part.body_name 기반으로 그룹화하고 검증한 영상만 응답에 넣습니다.
+        List<ReportResponseDto.RecoveryVideo> normalizedVideos = verifiedVideos.stream()
+                .map(this::toRecoveryVideo)
+                .toList();
 
-        video.setTitle(buildRecoveryVideoTitle(painfulParts));
-        video.setVideoUrl(verifiedVideo.videoUrl());
-        video.setSourceTitle(verifiedVideo.title());
-        video.setDurationSeconds(verifiedVideo.durationSeconds());
-        video.setSummaryBasis("VIDEO_METADATA_NOT_TRANSCRIPT");
+        List<String> coveredCodes = normalizedVideos.stream()
+                .flatMap(video -> video.getCoveredPainPartCodes().stream())
+                .distinct()
+                .toList();
+        List<String> uncoveredCodes = painfulParts.stream()
+                .map(BodyPart::getBodyPartCode)
+                .filter(code -> !coveredCodes.contains(code))
+                .distinct()
+                .toList();
+
+        response.setRecoveryVideos(normalizedVideos);
+        response.setRecoveryVideo(normalizedVideos.isEmpty() ? null : normalizedVideos.get(0));
+        response.setUncoveredPainPartCodes(uncoveredCodes);
     }
 
+    private ReportResponseDto.RecoveryVideo toRecoveryVideo(
+            YouTubeVideoSearchService.VideoResult verifiedVideo
+    ) {
+        String bodyGroup = resolveBodyGroup(verifiedVideo.targetParts());
+        return ReportResponseDto.RecoveryVideo.builder()
+                .title(buildRecoveryVideoTitle(verifiedVideo.targetParts()))
+                .videoUrl(verifiedVideo.videoUrl())
+                .sourceTitle(verifiedVideo.title())
+                .durationSeconds(verifiedVideo.durationSeconds())
+                .bodyGroup(bodyGroup)
+                .recommendationReason(buildRecommendationReason(bodyGroup, verifiedVideo.targetParts()))
+                .targetParts(verifiedVideo.targetParts())
+                .coveredPainPartCodes(verifiedVideo.coveredPainPartCodes())
+                .uncoveredPainPartCodes(verifiedVideo.uncoveredPainPartCodes())
+                .build();
+    }
+
+    private String resolveBodyGroup(List<String> targetParts) {
+        boolean lowerBody = targetParts.stream().anyMatch(this::isLowerBodyName);
+        return lowerBody ? "LOWER_BODY" : "UPPER_BODY";
+    }
+
+    private boolean isLowerBodyName(String bodyName) {
+        if (bodyName == null) {
+            return false;
+        }
+        return List.of("무릎", "오금", "허벅지", "종아리", "정강이", "발", "골반", "서혜부", "엉덩이", "둔근", "발목")
+                .stream()
+                .anyMatch(bodyName::contains);
+    }
+
+    private String buildRecommendationReason(String bodyGroup, List<String> targetParts) {
+        String groupLabel = "LOWER_BODY".equals(bodyGroup) ? "하체" : "상체";
+        String parts = displayBodyNames(targetParts);
+        String target = parts.isBlank() ? "선택 부위" : parts;
+        return target + " 부위의 긴장 완화와 운동 후 회복을 돕기 위해 "
+                + target + " 중심의 " + groupLabel + " 스트레칭 영상을 추천합니다.";
+    }
+
+    private String displayBodyNames(List<String> targetParts) {
+        if (targetParts == null || targetParts.isEmpty()) {
+            return "";
+        }
+        return targetParts.stream()
+                .filter(Objects::nonNull)
+                .map(this::displayBodyName)
+                .filter(name -> !name.isBlank())
+                .distinct()
+                .collect(Collectors.joining(", "));
+    }
+
+    private String displayBodyName(String targetPart) {
+        String bodyName = targetPart
+                .replaceAll("^(?:(?:LEFT|RIGHT|FRONT|BACK)\\s*)+", "")
+                .trim();
+        int openingParenthesis = bodyName.indexOf('(');
+        int closingParenthesis = bodyName.indexOf(')', openingParenthesis + 1);
+        if (openingParenthesis >= 0 && closingParenthesis > openingParenthesis + 1) {
+            return bodyName.substring(openingParenthesis + 1, closingParenthesis).trim();
+        }
+        return bodyName;
+    }
     private void validatePrescription(ReportResponseDto.Prescription prescription, String label) {
         if (prescription == null || isBlank(prescription.getTitle()) || isBlank(prescription.getSolution())) {
             throw new CustomException(HttpStatus.BAD_GATEWAY, "AI 리포트의 " + label + " 처방이 누락되었습니다.");
@@ -310,13 +384,17 @@ public class RunningReportService {
                 null,
                 buildSkinResult(skinRecord)
         );
+        List<ReportResponseDto.RecoveryVideo> recoveryVideos = response.getRecoveryVideos();
+        ReportResponseDto.RecoveryVideo primaryVideo = recoveryVideos.isEmpty()
+                ? response.getRecoveryVideo()
+                : recoveryVideos.get(0);
         Prescription stretch = createPrescription(
                 wellnessReport,
                 skinRecord,
                 PrescriptionCategory.STRETCH,
                 response.getStretching(),
-                buildStretchingDetail(response.getRecoveryVideo()),
-                response.getRecoveryVideo().getVideoUrl(),
+                buildStretchingDetail(recoveryVideos),
+                primaryVideo == null ? null : primaryVideo.getVideoUrl(),
                 null
         );
 
@@ -347,10 +425,22 @@ public class RunningReportService {
         return prescription;
     }
 
-    private String buildStretchingDetail(ReportResponseDto.RecoveryVideo recoveryVideo) {
-        return recoveryVideo.getSteps().stream()
-                .map(step -> step.getLabel() + ": " + step.getDescription())
-                .collect(Collectors.joining(System.lineSeparator()));
+    private String buildStretchingDetail(List<ReportResponseDto.RecoveryVideo> recoveryVideos) {
+        try {
+            return objectMapper.writeValueAsString(recoveryVideos);
+        } catch (JsonProcessingException exception) {
+            log.warn("Failed to serialize recovery videos for prescription detail", exception);
+            return buildLegacyStretchingDetail(recoveryVideos);
+        }
+    }
+
+    private String buildLegacyStretchingDetail(List<ReportResponseDto.RecoveryVideo> recoveryVideos) {
+        return recoveryVideos.stream()
+                .map(video -> "[" + video.getTitle() + "]" + System.lineSeparator()
+                        + video.getRecommendationReason()
+                        + System.lineSeparator()
+                        + video.getVideoUrl())
+                .collect(Collectors.joining(System.lineSeparator() + System.lineSeparator()));
     }
 
     private String buildSkinResult(SkinRecord skinRecord) {
@@ -491,23 +581,26 @@ public class RunningReportService {
         );
     }
 
-    private String buildVerifiedVideoPrompt(YouTubeVideoSearchService.VideoResult video) {
+    private String buildVerifiedVideosPrompt(List<YouTubeVideoSearchService.VideoResult> videos) {
+        StringBuilder videoDetails = new StringBuilder();
+        for (int index = 0; index < videos.size(); index++) {
+            YouTubeVideoSearchService.VideoResult video = videos.get(index);
+            videoDetails.append("\n[").append(index + 1).append("번 검증 영상]")
+                    .append("\n- 대상 부위: ").append(String.join(", ", video.targetParts()))
+                    .append("\n- 포함된 통증 코드: ").append(String.join(", ", video.coveredPainPartCodes()))
+                    .append("\n- 실제 영상 제목: ").append(video.title())
+                    .append("\n- 실제 영상 URL: ").append(video.videoUrl())
+                    .append("\n- 영상 길이: ").append(video.durationSeconds()).append("초")
+                    .append("\n- 영상 설명: ").append(video.description()).append("\n");
+        }
+
         return """
 
-                [서버가 YouTube Data API로 검증한 회복 영상]
-                - 실제 영상 제목: %s
-                - 실제 영상 URL: %s
-                - 영상 길이: %s초
-                - 영상 설명: %s
-                - recoveryVideo의 title과 videoUrl은 서버가 확정하므로 임의로 바꾸거나 다른 URL을 만들지 마세요.
-                - recoveryVideo.steps는 위 영상 메타데이터와 사용자가 선택한 아픈 부위에 맞게 작성하세요.
-                - 영상 자막 원문을 제공받지 않았으므로 설명에 없는 동작을 영상에 실제 등장한다고 단정하지 마세요.
-                """.formatted(
-                video.title(),
-                video.videoUrl(),
-                video.durationSeconds(),
-                video.description()
-        );
+                [서버가 body_part.body_name 기준으로 분류·검증한 회복 영상 - 최대 2개]
+                %s
+                - 회복 영상 목록과 추천 이유는 서버가 생성합니다.
+                - AI는 영상 요약, 동작 단계, URL, 영상 제목을 생성하거나 수정하지 마세요.
+                """.formatted(videoDetails);
     }
     private String buildSystemPrompt() {
         return """
@@ -528,11 +621,10 @@ public class RunningReportService {
                 - stretching: 사용자가 선택한 아픈 부위를 우선 고려하되 의료적 치료를 단정하지 않는 한 줄 스트레칭 솔루션을 작성하세요.
                 - 각 solution은 핵심 수치를 포함하고 120자 이내 한 문장으로 작성하세요.
 
-                3. 서버에서 검증한 3분 미만 회복 스트레칭 영상
-                - User Prompt의 '서버가 YouTube Data API로 검증한 회복 영상' 메타데이터만 사용하세요.
-                - title과 videoUrl은 서버가 최종 확정하므로 빈 문자열로 반환하고 새로운 제목이나 URL을 만들지 마세요.
-                - steps는 선택한 아픈 부위와 검증된 영상의 제목·설명에 맞는 2~6개 단계로 작성하세요.
-                - 영상 설명에 없는 동작을 실제 영상 내용이라고 단정하지 말고, 각 단계에 자세·수행 시간·주의점을 짧게 작성하세요.
+                3. 회복 영상 추천
+                - 영상은 서버가 body_part.body_name 기준으로 상체·하체를 분류한 뒤 최대 2개까지 결정합니다.
+                - AI는 영상의 실제 내용을 분석하거나 요약하지 않습니다.
+                - recoveryVideos, 영상 URL, 영상 제목, 동작 단계는 JSON에 포함하지 마세요. 서버가 검증값과 짧은 추천 이유를 추가합니다.
 
                 반드시 아래 구조의 JSON 객체 하나만 반환하세요. Markdown과 추가 설명은 금지합니다.
                 {
@@ -552,18 +644,10 @@ public class RunningReportService {
                   "stretching": {
                     "title": "스트레칭 제목",
                     "solution": "한 줄 솔루션"
-                  },
-                  "recoveryVideo": {
-                    "title": "",
-                    "videoUrl": "",
-                    "steps": [
-                      {"label": "STEP 1", "description": "동작 방법, 시간, 주의점"}
-                    ]
                   }
                 }
                 """;
     }
-
     private String describeBodyPart(BodyPart bodyPart) {
         List<String> details = new ArrayList<>();
         if (!isBlank(bodyPart.getSide())) {
@@ -576,17 +660,9 @@ public class RunningReportService {
         return bodyPart.getBodyName() + suffix + " [" + bodyPart.getBodyPartCode() + "]";
     }
 
-    private String buildRecoveryVideoTitle(List<BodyPart> painfulParts) {
-        String target = painfulParts == null || painfulParts.isEmpty()
-                ? "전신"
-                : painfulParts.stream()
-                        .map(BodyPart::getBodyName)
-                        .filter(Objects::nonNull)
-                        .map(String::trim)
-                        .filter(name -> !name.isBlank())
-                        .distinct()
-                        .collect(Collectors.joining(", "));
-        return (target.isBlank() ? "전신" : target) + " 스트레칭 영상";
+    private String buildRecoveryVideoTitle(List<String> targetParts) {
+        String target = displayBodyNames(targetParts);
+        return (target.isBlank() ? "전신" : target) + " 회복 스트레칭 영상";
     }
     private <T> Object value(WeatherResponseDto weather, Function<WeatherResponseDto, T> getter) {
         return weather == null ? null : getter.apply(weather);
