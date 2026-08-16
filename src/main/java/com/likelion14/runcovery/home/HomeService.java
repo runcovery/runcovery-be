@@ -12,11 +12,12 @@ import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
 import com.likelion14.runcovery.wellness.entity.Prescription;
 import com.likelion14.runcovery.wellness.repository.PrescriptionRepository;
-import jakarta.transaction.Transactional;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;

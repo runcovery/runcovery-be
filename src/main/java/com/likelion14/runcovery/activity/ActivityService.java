@@ -5,10 +5,10 @@ import com.likelion14.runcovery.mission.MissionRepository;
 import com.likelion14.runcovery.mission.Mission;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 
@@ -31,7 +31,7 @@ public class ActivityService {
         Mission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
 
         ActivitySyncResponseDto.MissionInfo missionInfo = null;
-        if (mission != null) {
+        if (mission != null && !mission.getIsRest()) {
             mission.complete();
             mission.setActivityId(activityRecord.getId());
             missionInfo = new ActivitySyncResponseDto.MissionInfo(mission.getId(), true);

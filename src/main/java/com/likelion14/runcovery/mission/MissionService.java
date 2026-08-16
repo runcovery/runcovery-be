@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,6 +34,7 @@ public class MissionService {
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
 
+    @Transactional
     public MissionResponseDto generateMission(long userId, double lat, double lon) {
 
         // 1. 유저 조회
@@ -87,6 +89,7 @@ public class MissionService {
                             aiResult.recommendedIntensity(), aiResult.recommendedTime(),
                             aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
                     newMission.setIsRest(aiResult.isRest());
+                    if(aiResult.isRest()) newMission.setIsCompleted(true);
                     return newMission;
                 });
         Mission savedMission = missionRepository.save(mission);

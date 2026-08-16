@@ -10,6 +10,7 @@ import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.mission.MissionRepository;
 import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.user.UserRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,7 @@ public class ConditionService {
     private final OpenAiService openAiService;
     private final ObjectMapper objectMapper;
 
+    @Transactional
     public ConditionResponseDto analyzeCondition(ConditionRequestDto request) {
 
         // 1. 유저 조회
