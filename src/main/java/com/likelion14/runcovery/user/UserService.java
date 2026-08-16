@@ -42,7 +42,11 @@ public class UserService {
     private final OpenAiService openAiService;
 
     public UserCreateResponseDto createUser(UserCreateRequestDto request) {
+        if (userRepository.findByPublicId(request.getUserId()).isPresent()) {
+            throw new CustomException(HttpStatus.CONFLICT, "이미 등록된 userId입니다");
+        }
         User user = new User(
+                request.getUserId(),
                 request.getNickname(),
                 request.getAge(),
                 request.getGender(),

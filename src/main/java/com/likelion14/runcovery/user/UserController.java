@@ -1,7 +1,7 @@
 package com.likelion14.runcovery.user;
 
-import com.likelion14.runcovery.common.AppConstants;
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.common.CurrentUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,8 +28,8 @@ public class UserController {
 
     @Operation(summary = "유저/조회", tags = "1. User")
     @GetMapping("/me")
-    public ApiResponse<UserResponseDto> getMyInfo() {
-        return ApiResponse.ok(userService.getMyInfo(AppConstants.DEFAULT_USER_ID));
+    public ApiResponse<UserResponseDto> getMyInfo(@CurrentUserId Long userId) {
+        return ApiResponse.ok(userService.getMyInfo(userId));
     }
 
     @Operation(summary = "유저/마이페이지", tags = "1. User")
