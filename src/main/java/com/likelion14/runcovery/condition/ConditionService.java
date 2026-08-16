@@ -32,10 +32,10 @@ public class ConditionService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public ConditionResponseDto analyzeCondition(ConditionRequestDto request) {
+    public ConditionResponseDto analyzeCondition(long userId, ConditionRequestDto request) {
 
         // 1. 유저 조회
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         // 2. 최근 4일 운동 현황 조회
@@ -64,36 +64,36 @@ public class ConditionService {
                 .orElseGet(() -> new Condition(user, today, request.getSleepQuality(), request.getBodyCondition()));
         conditionRepository.save(condition);
 
-        // 4. OpenAI에 컨디션 분석 요청 (수면, 운동기록, 통증부위, 몸상태 전달)
+        // 4. OpenAI 응답을 임시로 conditionTitle, conditionFeedback만 파싱
         ConditionResponseDto result = openAiService.getStructuredCompletion(
                 buildSystemPrompt(), buildUserPrompt(user, request, completedCount, restCount, lastRunDateStr), ConditionResponseDto.class);
 
         // 5. 분석 결과 저장
         try {
-            condition.updateAnalysis(result.getConditionTitle(), objectMapper.writeValueAsString(result.getConditionFeedback()));
+            condition.updateAnalysis(result.conditionTitle(), objectMapper.writeValueAsString(result.conditionFeedback()));
         } catch (JsonProcessingException e) {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "컨디션 피드백 변환에 실패했습니다.");
         }
 
         conditionRepository.save(condition);
 
-        // 6. 분석 결과 반환
-        return new ConditionResponseDto(condition.getConditionDate(), result.getConditionTitle(), result.getConditionFeedback());
-    }
+// 6. 분환 결과 반환
+        return new ConditionResponseDto(user.getId(), condition.getConditionDate(), result.conditionTitle(), result.conditionFeedback());
+}
 
-    public ConditionResponseDto getLatestCondition() {
-        User user = userRepository.findById(1L)
+    public ConditionResponseDto getLatestCondition(long userId) {
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         LocalDate today = LocalDate.now();
 
         Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .or(() -> conditionRepository.findFirstByUserOrderByConditionDateDesc(user))
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "컨디션 기록이 없습니다."));
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "기존 컨디션 기록이 없습니다."));
 
         try {
             List<String> feedback = objectMapper.readValue(condition.getConditionFeedback(), new TypeReference<List<String>>() {});
-            return new ConditionResponseDto(condition.getConditionDate(), condition.getConditionTitle(), feedback);
+            return new ConditionResponseDto(user.getId(), condition.getConditionDate(), condition.getConditionTitle(), feedback);
         } catch (JsonProcessingException e) {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "피드백 변환에 실패했습니다.");
         }
@@ -101,20 +101,22 @@ public class ConditionService {
 
     private String buildSystemPrompt() {
         return """
-            사용자의 컨디션 정보를 분석하여 오늘의 컨디션을 요약해주세요.
-            반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
-            통증 부위 관련 문장은 "계속", "항상", "만성" 등 지속성을 암시하는 표현을 사용하지 마세요.
-            "완전히", "절대", "항상" 등 극단적이고 단정적인 표현은 사용하지 마세요.
-            오늘의 상태만 부드럽게 표현해주세요.
-            {
-              "conditionTitle": "오늘 컨디션을 한 줄로 표현 (예: 최고의 컨디션이에요!)",
-              "conditionItems": [
-                "수면 시간과 상태를 한 줄로 (예: 수면 7시간 이하, 그럭저럭 잘 잤어요.)",
-                "최근 운동 기반 몸 회복 상태 한 줄로 (예: 최근 2일 휴식으로 몸이 가벼울 거예요.)",
-                "통증 부위가 있다면 공감 한 줄로, 없다면 아픈 곳이 없어서 좋은 컨디션임을 표현 (예: 아픈 곳이 없어서 최상의 컨디션이에요.)"
-              ]
-            }
-        """;
+                    사용자의 컨디션 정보를 분석하여 오늘의 컨디션을 요약해주세요.
+                    반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트는 포함하지 마세요.
+                    - 운동 횟수나 상태를 언급할 때 "~일 수 있어요", "~것 같아요" 등 추정하는 표현을 사용하세요.
+                    - "계속", "항상", "만성", "완전히", "절대", "반드시" 등 단정적이거나 지속성을 암시하는 표현은 사용하지 마세요.
+                    - 오늘의 상태를 부드럽고 공감하는 어투로 표현하세요.
+                    - 수치(운동 횟수, 수면 시간 등)를 직접 언급하지 마세요.
+                    오늘의 상태만 부드럽게 표현해주세요.
+                    {
+                      "conditionTitle": "오늘 컨디션을 한 줄로 표현 (예: 최고의 컨디션이에요!)",
+                      "conditionItems": [
+                        "수면 시간과 상태를 한 줄로 (예: 수면 7시간 이하, 그럭저럭 잘 잤어요.)",
+                        "최근 운동 기반 몸 회복 상태 한 줄로 (예: 최근 2일 휴식으로 몸이 가벼울 거예요.)",
+                        "통증 부위가 있다면 해당 부위가 러닝에 미치는 영향을 한 줄로, 없다면 운동하기 좋은 상태임을 표현 (예 통증 있음: 종아리 쪽 불편함이 러닝 중 페이스에 영향을 줄 수 있어요. / 예 통증 없음: 아픈 곳이 없어서 오늘 러닝하기 좋은 상태예요.)"
+                      ]
+                    }
+                """;
     }
 
     private String buildUserPrompt(User user, ConditionRequestDto request,

@@ -1,6 +1,7 @@
 package com.likelion14.runcovery.condition;
 
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.common.CurrentUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,13 +18,15 @@ public class ConditionController {
 
     @Operation(summary = "컨디션/분석,저장")
     @PostMapping
-    public ApiResponse<ConditionResponseDto> analyzeCondition (@RequestBody @Valid ConditionRequestDto request) {
-        return ApiResponse.ok(conditionService.analyzeCondition(request));
+    public ApiResponse<ConditionResponseDto> analyzeCondition (
+            @CurrentUserId Long userId,
+            @RequestBody @Valid ConditionRequestDto request) {
+        return ApiResponse.ok(conditionService.analyzeCondition(userId, request));
     }
 
     @Operation(summary = "컨디션/조회")
     @GetMapping("/latest")
-    public ApiResponse<ConditionResponseDto> getLatestCondition() {
-        return ApiResponse.ok(conditionService.getLatestCondition());
+    public ApiResponse<ConditionResponseDto> getLatestCondition(@CurrentUserId Long userId) {
+        return ApiResponse.ok(conditionService.getLatestCondition(userId));
     }
 }
