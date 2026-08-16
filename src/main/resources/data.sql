@@ -1,5 +1,5 @@
-INSERT IGNORE INTO users (user_id, public_id, nickname, age, gender, height, weight, running_experience, max_run_duration, avg_sleep_hours) VALUES
-(1, '11111111-1111-1111-1111-111111111111', '강냉이', 22, '남성', 175.0, 70.0, '뛰다가 오래 쉬었어요.', 30, 7.00);
+INSERT IGNORE INTO users (user_id, public_id, nickname, age, gender, height, weight, running_experience) VALUES
+(1, '11111111-1111-1111-1111-111111111111', '강냉이', 22, '남성', 175.0, 70.0, '뛰다가 오래 쉬었어요.');
 
 INSERT IGNORE INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('B_NECK', '뒷목', NULL, 'BACK'),
@@ -71,7 +71,7 @@ INSERT IGNORE INTO today_mission (mission_id, condition_id, week_id, mission_dat
 # (1, 1, 53, '2026-08-08', 5000, 360, 145, 165, 350, 160, '2026-08-08 08:00:00', '2026-08-08 08:53:00');
 
 INSERT IGNORE INTO activity_record (record_id, user_id, running_duration, record_date, distance_m, avg_pace, avg_heart_rate, max_heart_rate, calories, cadence, start_time, end_time, lat, lon) VALUES
-(1, 1, 53, '2026-08-08', 5000, 360, 145, 165, 350, 160, '2026-08-08 08:00:00', '2026-08-08 08:53:00', 37.5665, 126.9780);
+(1, 1, 3180, '2026-08-08', 5000, 360, 145, 165, 350, 160, '2026-08-08 08:00:00', '2026-08-08 08:53:00', 37.5665, 126.9780);
 
 INSERT IGNORE INTO wellness_report (report_id, record_id, report_date, warning_title, running_intensity) VALUES
 (1, 1, '2026-08-08', '운동 강도에 주의하세요', 7);

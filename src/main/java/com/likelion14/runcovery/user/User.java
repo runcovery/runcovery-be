@@ -41,14 +41,8 @@ public class User {
     @Column(nullable = false)
     private String runningExperience;
 
-    @Column(nullable = false)
-    private Integer maxRunDuration;
-
-    @Column(nullable = false, precision = 4, scale = 2)
-    private BigDecimal avgSleepHours;
-
     public User(UUID publicId, String nickname, Integer age, String gender, BigDecimal height, BigDecimal weight,
-                String runningExperience, Integer maxRunDuration, BigDecimal avgSleepHours) {
+                String runningExperience) {
         this.publicId = publicId;
         this.nickname = nickname;
         this.age = age;
@@ -56,19 +50,15 @@ public class User {
         this.height = height;
         this.weight = weight;
         this.runningExperience = runningExperience;
-        this.maxRunDuration = maxRunDuration;
-        this.avgSleepHours = avgSleepHours;
     }
 
     public void update(String nickname, Integer age, String gender, BigDecimal height, BigDecimal weight,
-                        String runningExperience, Integer maxRunDuration, BigDecimal avgSleepHours) {
+                        String runningExperience) {
         this.nickname = nickname;
         this.age = age;
         this.gender = gender;
         this.height = height;
         this.weight = weight;
         this.runningExperience = runningExperience;
-        this.maxRunDuration = maxRunDuration;
-        this.avgSleepHours = avgSleepHours;
     }
 }
