@@ -103,7 +103,7 @@ public class RunningReportService {
                         HttpStatus.NOT_FOUND,
                         reportDate + " 날짜의 AFTER_RUN 피부 스캔 기록이 없습니다."
                 ));
-        TodayCondition condition = conditionRepository.findByUserAndConditionDate(user, reportDate)
+        TodayCondition condition = conditionRepository.findFirstByUserAndConditionDateOrderByIdDesc(user, reportDate)
                 .orElseThrow(() -> new CustomException(
                         HttpStatus.NOT_FOUND,
                         reportDate + " 날짜의 수면 컨디션 기록이 없습니다."

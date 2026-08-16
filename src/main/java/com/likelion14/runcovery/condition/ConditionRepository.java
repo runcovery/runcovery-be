@@ -10,6 +10,11 @@ import java.util.Optional;
 public interface ConditionRepository extends JpaRepository<TodayCondition, Long> {
     Optional<TodayCondition> findByUserAndConditionDate(User user, LocalDate conditionDate);
 
+    /**
+     * 활동 날짜와 같은 컨디션 중 가장 최근에 생성된(condition_id가 가장 큰) 기록을 반환합니다.
+     */
+    Optional<TodayCondition> findFirstByUserAndConditionDateOrderByIdDesc(User user, LocalDate conditionDate);
+
     // 가장 최근 컨디션 조회
     Optional<TodayCondition> findFirstByUserOrderByConditionDateDesc(User user);
 
