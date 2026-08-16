@@ -1,7 +1,7 @@
 package com.likelion14.runcovery.body;
 
-import com.likelion14.runcovery.common.AppConstants;
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.common.CurrentUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -18,15 +18,16 @@ public class BodyIssueController {
 
     @Operation(summary = "통증부위/조회")
     @GetMapping
-    public ApiResponse<BodyIssueListResponseDto> getBodyIssues() {
-        return ApiResponse.ok(bodyIssueService.getBodyIssues(AppConstants.DEFAULT_USER_ID));
+    public ApiResponse<BodyIssueListResponseDto> getBodyIssues(@CurrentUserId Long userId) {
+        return ApiResponse.ok(bodyIssueService.getBodyIssues(userId));
     }
 
     @Operation(summary = "통증부위/저장")
     @PutMapping
     public ApiResponse<BodyIssueSaveResponseDto> saveBodyIssues(
+            @CurrentUserId Long userId,
             @Valid @RequestBody BodyIssueSaveRequestDto request
     ) {
-        return ApiResponse.ok(bodyIssueService.saveBodyIssues(AppConstants.DEFAULT_USER_ID, request));
+        return ApiResponse.ok(bodyIssueService.saveBodyIssues(userId, request));
     }
 }

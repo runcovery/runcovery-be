@@ -164,13 +164,11 @@ public class GoalService {
             - 나이: %d세
             - 성별: %s
             - 러닝 경험: %s
-            - 1회 최대 연속 러닝 지속 시간: %d분
-            - 평균 수면 시간: %s시간
             - 키: %scm, 몸무게: %skg
 
             이 프로필을 참고하여 동기부여가 될 만한 미래의 모습(장면) 3가지를 추천해주세요.
             """.formatted(user.getNickname(), user.getAge(), user.getGender(), user.getRunningExperience(),
-                user.getMaxRunDuration(), user.getAvgSleepHours(), user.getHeight(), user.getWeight());
+                user.getHeight(), user.getWeight());
     }
 
     private String buildPlanSystemPrompt() {
@@ -207,8 +205,6 @@ public class GoalService {
             - 나이: %d세
             - 성별: %s
             - 러닝 경험: %s
-            - 1회 최대 연속 러닝 지속 시간: %d분
-            - 평균 수면 시간: %s시간
             - 키: %scm, 몸무게: %skg
 
             다음은 사용자가 설정한 러닝 목표 계획입니다:
@@ -219,7 +215,7 @@ public class GoalService {
 
             이 프로필과 계획을 참고하여 동기부여가 될 만한 미래의 모습(장면) 3가지를 추천해주세요.
             """.formatted(user.getNickname(), user.getAge(), user.getGender(), user.getRunningExperience(),
-                user.getMaxRunDuration(), user.getAvgSleepHours(), user.getHeight(), user.getWeight(),
+                user.getHeight(), user.getWeight(),
                 request.getTargetDistance(), request.getTargetPeriod(),
                 request.getWeeklyFrequency(), request.getAvailableTime());
     }
@@ -251,8 +247,6 @@ public class GoalService {
             - 나이: %d세
             - 성별: %s
             - 러닝 경험: %s
-            - 1회 최대 연속 러닝 지속 시간: %d분
-            - 평균 수면 시간: %s시간
             - 키: %scm, 몸무게: %skg
 
             사용자가 방금 선택한 미래의 모습(장면)은 다음과 같습니다:
@@ -262,7 +256,7 @@ public class GoalService {
             이 프로필과 선택한 장면을 참고하여 적합한 러닝 목표 수치(목표 거리, 목표 기간,
             주간 운동 횟수, 1회 가능 시간)와 그 추천 이유를 알려주세요.
             """.formatted(user.getNickname(), user.getAge(), user.getGender(), user.getRunningExperience(),
-                user.getMaxRunDuration(), user.getAvgSleepHours(), user.getHeight(), user.getWeight(),
+                user.getHeight(), user.getWeight(),
                 request.getScene(), request.getReason());
     }
 
@@ -316,8 +310,6 @@ public class GoalService {
             - 나이: %d세
             - 성별: %s
             - 러닝 경험: %s
-            - 1회 최대 연속 러닝 지속 시간: %d분
-            - 평균 수면 시간: %s시간
             - 키: %scm, 몸무게: %skg
 
             다음은 사용자가 선택한 최종 목표입니다:
@@ -340,7 +332,7 @@ public class GoalService {
             이 정보를 참고하여 이번 주의 주간 러닝 목표와, 주간 운동 목표 횟수(%d회)만큼의 훈련 스케줄을
             추천해주세요. 스케줄 개수는 반드시 주간 운동 목표 횟수와 같아야 합니다.
             """.formatted(user.getNickname(), user.getAge(), user.getGender(), user.getRunningExperience(),
-                user.getMaxRunDuration(), user.getAvgSleepHours(), user.getHeight(), user.getWeight(),
+                user.getHeight(), user.getWeight(),
                 futureGoal.getScene(), futureGoal.getTargetDistance(), futureGoal.getTargetPeriod(),
                 futureGoal.getWeeklyFrequency(), futureGoal.getAvailableTime(), currentMaxDistance, totalWeeks,
                 weekNo, progressPercent, futureGoal.getWeeklyFrequency(), futureGoal.getTargetDistance(),

@@ -1,5 +1,7 @@
 package com.likelion14.runcovery.mission;
 
+import com.likelion14.runcovery.activity.ActivityRecord;
+import com.likelion14.runcovery.activity.ActivityRecordRepository;
 import com.likelion14.runcovery.common.OpenAiService;
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
@@ -27,6 +29,7 @@ import java.util.List;
 public class MissionService {
 
     private final UserRepository userRepository;
+    private final ActivityRecordRepository activityRecordRepository;
     private final ConditionRepository conditionRepository;
     private final WeeklyGoalRepository weeklyGoalRepository;
     private final WeeklyScheduleRepository weeklyScheduleRepository;
@@ -64,11 +67,16 @@ public class MissionService {
         // 4. 현재 날씨 조회
         WeatherResponseDto currentWeather = weatherService.getCurrentWeather(lat, lon);
 
-        // 5. OpenAI에 미션 생성 요청 (주간목표, 주간스케줄, 컨디션, 날씨 전달)
+        // 5. 최근 10회 기록 중 최대 러닝 시간 계산 (초 단위 저장값을 분 단위로 변환)
+        int currentMaxDuration = activityRecordRepository.findTop10ByUserOrderByRecordDateDesc(user).stream()
+                .mapToInt(ActivityRecord::getRunningDuration)
+                .max().orElse(0) / 60;
+
+        // 6. OpenAI에 미션 생성 요청 (주간목표, 주간스케줄, 컨디션, 날씨 전달)
         log.info("OpenAI 요청 시작");
 
         MissionAiResult aiResult = openAiService.getStructuredCompletion(
-                buildSystemPrompt(), buildUserPrompt(user, condition, weeklyGoal, schedules, currentWeather), MissionAiResult.class);
+                buildSystemPrompt(), buildUserPrompt(user, condition, weeklyGoal, schedules, currentWeather, currentMaxDuration), MissionAiResult.class);
 
         log.info("OpenAI 응답 완료");
 
@@ -76,8 +84,9 @@ public class MissionService {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "AI 미션 생성에 실패했습니다.");
         }
 
-// 6. 응답 미션 저장
+        // 7. 응답 미션 저장
         Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
+
                 .map(existing -> {
                     existing.update(today, aiResult.getRecommendedIntensity(), aiResult.getRecommendedTime(),
                             aiResult.getRecommendedZone(), aiResult.getRecommendedZoneDesc(), aiResult.getDetailComment());
@@ -96,7 +105,7 @@ public class MissionService {
 
         log.info("미션 저장 완료");
 
-        // 7. 응답 반환
+        // 8. 응답 반환
         return MissionResponseDto.from(savedMission);
     }
 
@@ -152,7 +161,7 @@ public class MissionService {
     private String buildUserPrompt(User user, Condition condition,
                                    WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather) {
         return String.format("""
-                        사용자 정보: %s, %d세, %.1fkg 최대 러닝 가능 시간: %d분
+                        사용자 정보: %s, %d세, %.1fkg 최근 최대 러닝 지속 시간: %s
                         몸 상태: %s
                         수면: %s
                         오늘의 컨디션 분석: %s
@@ -165,7 +174,7 @@ public class MissionService {
                 user.getGender(),
                 user.getAge(),
                 user.getWeight(),
-                user.getMaxRunDuration(),
+                maxDurationText,
                 condition.getBodyCondition().getDescription(),
                 condition.getSleepQuality().getDescription(),
                 condition.getConditionFeedback(),

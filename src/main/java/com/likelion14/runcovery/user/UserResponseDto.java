@@ -14,8 +14,6 @@ public class UserResponseDto {
     private BigDecimal height;
     private BigDecimal weight;
     private String runningExperience;
-    private Integer maxRunDuration;
-    private BigDecimal avgSleepHours;
 
     public UserResponseDto(User user) {
         this.userId = user.getId();
@@ -25,7 +23,5 @@ public class UserResponseDto {
         this.height = user.getHeight();
         this.weight = user.getWeight();
         this.runningExperience = user.getRunningExperience();
-        this.maxRunDuration = user.getMaxRunDuration();
-        this.avgSleepHours = user.getAvgSleepHours();
     }
 }

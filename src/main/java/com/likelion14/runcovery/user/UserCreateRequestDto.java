@@ -32,10 +32,4 @@ public class UserCreateRequestDto {
 
     @NotBlank(message = "러닝 경험은 필수입니다")
     private String runningExperience;
-
-    @NotNull(message = "최대 러닝 지속 시간은 필수입니다")
-    private Integer maxRunDuration;
-
-    @NotNull(message = "평균 수면 시간은 필수입니다")
-    private BigDecimal avgSleepHours;
 }

@@ -1,3 +1,4 @@
+
 INSERT IGNORE INTO users (user_id, public_id, nickname, age, gender, height, weight, running_experience, max_run_duration, avg_sleep_hours) VALUES
 (1, '11111111-1111-1111-1111-111111111111', '강냉이', 22, '남성', 175.0, 70.0, '뛰다가 오래 쉬었어요.', 30, 7.00),
 (2, '22222222-2222-2222-2222-222222222222', '달리기', 25, '여성', 168.0, 58.0, '꾸준히 달리고 있어요.', 45, 6.50),
@@ -65,7 +66,7 @@ INSERT IGNORE INTO mission (mission_id, condition_id, week_id, mission_date, rec
 (1, 1, 1, '2026-08-09', '권장 강도 | 중 · 고강도 러닝', '20분 내외로 도전해보세요.', 'Zone 3~4', '편안하게 대화할 수 있는 강도', '워밍업(5분)-메인(10분)-쿨다움(5분)', FALSE, FALSE, NULL);
 
 INSERT IGNORE INTO activity_record (record_id, user_id, running_duration, record_date, distance_m, avg_pace, avg_heart_rate, max_heart_rate, calories, cadence, start_time, end_time, lat, lon) VALUES
-(1, 1, 53, '2026-08-08', 5000, 360, 145, 165, 350, 160, '2026-08-08 08:00:00', '2026-08-08 08:53:00', 37.5665, 126.9780);
+(1, 1, 3180, '2026-08-08', 5000, 360, 145, 165, 350, 160, '2026-08-08 08:00:00', '2026-08-08 08:53:00', 37.5665, 126.9780);
 
 INSERT IGNORE INTO wellness_report (report_id, record_id, report_date, warning_title, running_intensity) VALUES
 (1, 1, '2026-08-08', '운동 강도에 주의하세요', 7);
