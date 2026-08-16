@@ -5,15 +5,12 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 
-@Getter
-@NoArgsConstructor
-@AllArgsConstructor
-public class HomeResponseDto {
-    private String nickname;
-    private String scene;
-    private Integer achievementRate;
-    private Integer temp;
-    private Integer daysRemaining;
-    private String wellnessTip;
-
-}
+public record HomeResponseDto(
+        Long userId,
+        String nickname,
+        String scene,
+        Integer achievementRate,
+        Integer temp,
+        Integer daysRemaining,
+        String wellnessTip
+) {}

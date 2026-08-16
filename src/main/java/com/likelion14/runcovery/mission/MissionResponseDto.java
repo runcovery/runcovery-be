@@ -1,6 +1,6 @@
 package com.likelion14.runcovery.mission;
 
-import lombok.Getter;
+
 
 public record MissionResponseDto(
         Long userId,
@@ -30,7 +30,7 @@ public record MissionResponseDto(
             String status,
             MissionResponseDto mission
     ) {
-        public static Status noCondition() { // 오늘의 컨디션
+        public static Status noCondition() {
             return new Status("NO_CONDITION", null);
         }
 

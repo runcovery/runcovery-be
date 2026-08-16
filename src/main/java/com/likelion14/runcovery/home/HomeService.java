@@ -36,17 +36,17 @@ public class HomeService {
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
 
-    @Transactional
-    public HomeResponseDto getHome(double lat, double lon) {
+    public HomeResponseDto getHome(long userId, double lat, double lon) {
 
         LocalDate today = LocalDate.now();
 
         // 유저 조회
-        User user = userRepository.findById(1L)
+        User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
 
         // 미래 목표 조회
         FutureGoal futureGoal = futureGoalRepository.findFirstByUserOrderByIdDesc(user).orElse(null);
+
 
         // 미래 목표 관련 필드
         String scene = null;
@@ -62,20 +62,27 @@ public class HomeService {
             );
         }
 
-        // 날씨 조회
-        WeatherResponseDto weather = weatherService.getCurrentWeather(lat, lon);
-        int temp = (int) Math.round(weather.getTemp());
+        // 날씨 조회 - 주석 풀기
+//        WeatherResponseDto weather = weatherService.getCurrentWeather(lat, lon);
+//        int temp = (int) Math.round(weather.getTemp());
 
-        // 웰니스 팁 생성
-        String wellnessTip = buildWellnessTip(today, weather);
+        WeatherResponseDto weather = null;
+        int temp = 0;
 
-        return new HomeResponseDto(user.getNickname(), scene, achievementRate, temp, daysRemaining, wellnessTip);
+        log.info("Opne AI 요청");
+
+        // 웰니스 팁 생성 - 주석 풀기
+        //String wellnessTip = buildWellnessTip(user, today, weather);
+
+        log.info("Opne AI 완료");
+        return new HomeResponseDto(userId, user.getNickname(), scene, achievementRate, temp, daysRemaining, "wellnessTip");
     }
 
     // 달성률 계산
     private int calcAndSaveAchievementRate(FutureGoal futureGoal) {
         int totalTarget = futureGoal.getWeeklyFrequency() * (futureGoal.getTargetPeriod() * 4);
-        long completedCount = missionRepository.countByIsCompletedTrue();
+        long completedCount = missionRepository.countByUserAndIsCompletedTrueAndMissionDateAfter(
+                futureGoal.getUser(), futureGoal.getCreatedAt().toLocalDate());
         int achievementRate = totalTarget == 0 ? 0 :
                 (int) Math.min((double) completedCount / totalTarget * 100, 100);
 
@@ -87,30 +94,39 @@ public class HomeService {
     }
 
     // 상태에 따른 웰니스 팁 생성
-    private String buildWellnessTip(LocalDate today, WeatherResponseDto weather) {
-        List<Prescription> prescriptions = prescriptionRepository.findByPrescriptionDate(today);
-        Mission mission = missionRepository.findByMissionDate(today).orElse(null);
+    private String buildWellnessTip(User user, LocalDate today, WeatherResponseDto weather) {
+
+        List<Prescription> prescriptions = prescriptionRepository.findBySkinRecordUserAndPrescriptionDate(user, today);
+        Mission mission = missionRepository.findByConditionUserAndMissionDate(user, today).orElse(null);
 
         if (!prescriptions.isEmpty()) {
+            log.info("1");
             // 처방전 리포트 생성 후
-            return openAiService.getTextCompletion(buildSystemPrompt(), buildCompletedMissionPrompt(prescriptions));
-        } else if (mission != null && mission.getIsCompleted()) {
+            return openAiService.getStructuredCompletion(buildSystemPrompt(), buildCompletedMissionPrompt(prescriptions), String.class);
+        } else if (mission == null) {
+            log.info("2");
+            // 미션 생성 전
+            return openAiService.getStructuredCompletion(buildSystemPrompt(), buildWeatherPrompt(weather), String.class);
+        } else if (mission.getIsRest()) {
+            // 휴식일
+            return "오늘은 휴식일이에요! 가벼운 스트레칭으로 몸을 풀어주는 걸 추천드려요.";
+        } else if (mission.getIsCompleted()) {
             // 미션 완료, 처방전 생성 전
             return "오늘의 운동을 완료했어요! 사후관리 리포트를 받아보세요.";
-        } else if (mission != null) {
-            // 미션 생성 시
-            return openAiService.getTextCompletion(buildSystemPrompt(), buildMissionPrompt(mission));
         } else {
-            // 미션 생성 전
-            return openAiService.getTextCompletion(buildSystemPrompt(), buildWeatherPrompt(weather));
+            log.info("3");
+            // 미션 생성 시, 미완료
+            return openAiService.getStructuredCompletion(buildSystemPrompt(), buildMissionPrompt(mission), String.class);
         }
     }
 
     private String buildSystemPrompt() {
+        log.info("3-1");
         return """
         사용자의 오늘 상태에 맞는 웰니스 팁을 한 문장으로 생성해주세요.
         반드시 한 문장으로만 응답하세요. 다른 텍스트나 마크다운은 포함하지 마세요.
-        친근한 느낌으로 "추천드려요"로 문장을 끝내주세요.
+        친근한 해요체로 자연스럽게 끝나도록 작성해주세요.
+        문장 중간이나 끝에 쉼표(,) 뒤에 추가 문구를 붙이지 마세요.
         "지금 즉시", "즉각", "바로" 같은 긴박한 표현은 사용하지 마세요.
         """;
     }
@@ -129,10 +145,13 @@ public class HomeService {
     }
 
     private String buildMissionPrompt(Mission mission) {
+        log.info("3-2");
         return String.format("""
         오늘 미션: %s
         권장 시간: %s
-        위 미션을 바탕으로 오늘의 웰니스 팁을 한 문장으로 생성해주세요.
+        위 미션을 바탕으로 오늘 운동을 응원하는 한 문장을 생성해주세요.
+        운동을 시작하기 전 동기부여가 될 수 있도록 긍정적이고 활기찬 어투로 자연스럽게 작성해주세요.
+        문장 끝에 쉼표(,) 뒤에 추가 문구를 붙이지 마세요.
         """,
                 mission.getRecommendedIntensity(),
                 mission.getRecommendedTime()

@@ -1,6 +1,7 @@
 package com.likelion14.runcovery.home;
 
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.common.CurrentUserId;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
 import com.likelion14.runcovery.common.weather.WeatherService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,10 +21,11 @@ public class HomeController {
     @Operation(summary = "홈", tags = "1. User")
     @GetMapping("")
     public ApiResponse<HomeResponseDto> getHome(
+            @CurrentUserId Long userId,
             @Parameter(example = "37.5665") @RequestParam Double lat,
             @Parameter(example = "126.9780") @RequestParam Double lon
     ){
-        HomeResponseDto response = homeService.getHome(lat, lon);
+        HomeResponseDto response = homeService.getHome(userId, lat, lon);
         return ApiResponse.ok(response);
     }
 }
