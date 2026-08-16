@@ -52,9 +52,7 @@ public class UserService {
                 request.getGender(),
                 request.getHeight(),
                 request.getWeight(),
-                request.getRunningExperience(),
-                request.getMaxRunDuration(),
-                request.getAvgSleepHours()
+                request.getRunningExperience()
         );
         User savedUser = userRepository.save(user);
         return new UserCreateResponseDto(savedUser);
