@@ -1,10 +1,17 @@
 package com.likelion14.runcovery.mission;
 
-public record MissionAiResult(
-        String recommendedIntensity,
-        String recommendedTime,
-        String recommendedZone,
-        String recommendedZoneDesc,
-        String detailComment,
-        Boolean isRest
-) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+@Getter
+@NoArgsConstructor
+@AllArgsConstructor
+public class MissionAiResult {
+    private String recommendedIntensity;
+    private String recommendedTime;
+    private String recommendedZone;
+    private String recommendedZoneDesc;
+    private String detailComment;
+    private Boolean isRest;
+}

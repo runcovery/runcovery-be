@@ -72,24 +72,24 @@ public class MissionService {
 
         log.info("OpenAI 응답 완료");
 
-        if (aiResult == null || aiResult.recommendedIntensity() == null) {
+        if (aiResult == null || aiResult.getRecommendedIntensity() == null) {
             throw new CustomException(HttpStatus.INTERNAL_SERVER_ERROR, "AI 미션 생성에 실패했습니다.");
         }
 
-        // 6. 응답 미션 저장
+// 6. 응답 미션 저장
         Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
                 .map(existing -> {
-                    existing.update(today, aiResult.recommendedIntensity(), aiResult.recommendedTime(),
-                            aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
-                    existing.setIsRest(aiResult.isRest());
+                    existing.update(today, aiResult.getRecommendedIntensity(), aiResult.getRecommendedTime(),
+                            aiResult.getRecommendedZone(), aiResult.getRecommendedZoneDesc(), aiResult.getDetailComment());
+                    existing.setIsRest(aiResult.getIsRest());
                     return existing;
                 })
                 .orElseGet(() -> {
                     Mission newMission = new Mission(condition, weeklyGoal, today,
-                            aiResult.recommendedIntensity(), aiResult.recommendedTime(),
-                            aiResult.recommendedZone(), aiResult.recommendedZoneDesc(), aiResult.detailComment());
-                    newMission.setIsRest(aiResult.isRest());
-                    if(aiResult.isRest()) newMission.setIsCompleted(true);
+                            aiResult.getRecommendedIntensity(), aiResult.getRecommendedTime(),
+                            aiResult.getRecommendedZone(), aiResult.getRecommendedZoneDesc(), aiResult.getDetailComment());
+                    newMission.setIsRest(aiResult.getIsRest());
+                    if(aiResult.getIsRest()) newMission.setIsCompleted(true);
                     return newMission;
                 });
         Mission savedMission = missionRepository.save(mission);

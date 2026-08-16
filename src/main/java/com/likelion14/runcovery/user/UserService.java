@@ -122,9 +122,6 @@ public class UserService {
                 ? "이번주 사후관리 처방 내역이 없어요. 러닝 후 리포트를 받아보세요."
                 : openAiService.getTextCompletion(buildSystemPrompt(),
                 buildPostCareFeedbackPrompt(conditionRate, skinPrescriptions, stretchPrescriptions));
-//        String postCareFeedback = (skinPrescriptions.isEmpty() && stretchPrescriptions.isEmpty())
-//                ? "이번주 사후관리 처방 내역이 없어요. 러닝 후 리포트를 받아보세요."
-//                : "생성예정";
 
         MyStatsResponseDto.PostCareStats postCare = new MyStatsResponseDto.PostCareStats(
                 conditionRate, skinRate, stretchRate, postCareFeedback);
