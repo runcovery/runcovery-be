@@ -40,18 +40,16 @@ public class ConditionService {
 
         // 2. 최근 4일 운동 현황 조회
         LocalDate today = LocalDate.now();
-        LocalDate start = today.minusDays(4);
+        LocalDate start = today.minusDays(3);
         //    - 운동 완료 횟수
-        int completedCount = missionRepository.findByMissionDateBetweenAndIsCompletedTrueAndIsRestFalse(start, today).size();
-        //    - 휴식 횟수
-        int restCount = missionRepository.findByMissionDateBetweenAndIsRestTrue(start, today).size();
+        int completedCount = activityRecordRepository.findByUserAndRecordDateBetween(user, start, today).size();
         //    - 마지막 운동일
         LocalDate lastRunDate = activityRecordRepository.findTopByUserOrderByRecordDateDesc(user)
                 .map(ActivityRecord::getRecordDate)
                 .orElse(null);
         String lastRunDateStr = lastRunDate != null ? lastRunDate.toString() : "운동 기록 없음";
 
-        log.info("운동 완료 횟수 : {}, 휴식 횟수 : {}, 마지막 운동일 : {}", completedCount, restCount, lastRunDate);
+        log.info("운동 완료 횟수 : {}, 마지막 운동일 : {}", completedCount, lastRunDate);
 
         // 3. condition entity 생성 및 저장, 컨디션 체크 여부 업데이트
         log.info("기존 컨디션 조회 결과: {}", conditionRepository.findByUserAndConditionDate(user, today).isPresent());
@@ -66,7 +64,7 @@ public class ConditionService {
 
         // 4. OpenAI 응답을 임시로 conditionTitle, conditionFeedback만 파싱
         ConditionResponseDto result = openAiService.getStructuredCompletion(
-                buildSystemPrompt(), buildConditionPrompt(user, request, completedCount, restCount, lastRunDateStr), ConditionResponseDto.class);
+                buildSystemPrompt(), buildConditionPrompt(user, request, completedCount, lastRunDateStr), ConditionResponseDto.class);
 
         // 5. 분석 결과 저장
         try {
@@ -130,14 +128,13 @@ public class ConditionService {
     }
 
     private String buildConditionPrompt(User user, ConditionRequestDto request,
-                                   int completedCount, int restCount, String lastRunDate) {
+                                   int completedCount, String lastRunDate) {
         return String.format("""
             사용자 정보: %s, %d세, %.1fkg,
             몸 상태: %s
             수면: %s
             통증 부위: %s
-            최근 4일 운동 완료: %d회
-            최근 4일 휴식: %d회
+            최근 4일 운동 : %d회
             마지막 운동일: %s
             """,
                 user.getGender(),
@@ -147,7 +144,6 @@ public class ConditionService {
                 request.getSleepQuality().getDescription(),
                 request.getPainAreas(),
                 completedCount,
-                restCount,
                 lastRunDate
         );
     }

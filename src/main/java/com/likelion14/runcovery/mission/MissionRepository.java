@@ -13,12 +13,6 @@ import java.util.Optional;
 
 public interface MissionRepository extends JpaRepository<Mission, Long> {
 
-    // 운동 완료 횟수
-    List<Mission> findByMissionDateBetweenAndIsCompletedTrueAndIsRestFalse(LocalDate start, LocalDate end);
-
-    // 휴식 횟수
-    List<Mission> findByMissionDateBetweenAndIsRestTrue(LocalDate start, LocalDate end);
-
     Optional<Mission> findByConditionAndMissionDate(Condition condition, LocalDate missionDate);
 
     // 미래 목표 생성일 이후 유저의 완료된 미션 수 조회
