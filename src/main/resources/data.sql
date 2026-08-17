@@ -1,8 +1,8 @@
 
-INSERT IGNORE INTO users (user_id, public_id, nickname, age, gender, height, weight, running_experience, max_run_duration, avg_sleep_hours) VALUES
-(1, '11111111-1111-1111-1111-111111111111', '강냉이', 22, '남성', 175.0, 70.0, '뛰다가 오래 쉬었어요.', 30, 7.00),
-(2, '22222222-2222-2222-2222-222222222222', '달리기', 25, '여성', 168.0, 58.0, '꾸준히 달리고 있어요.', 45, 6.50),
-(3, '33333333-3333-3333-3333-333333333333', '뉴비러너', 28, '남성', 180.0, 75.0, '처음 시작해요.', 20, 7.50);
+INSERT IGNORE INTO users (user_id, public_id, nickname, age, gender, height, weight, running_experience) VALUES
+(1, '11111111-1111-1111-1111-111111111111', '강냉이', 22, '남성', 175.0, 70.0, '뛰다가 오래 쉬었어요.'),
+(2, '22222222-2222-2222-2222-222222222222', '달리기', 25, '여성', 168.0, 58.0, '꾸준히 달리고 있어요.'),
+(3, '33333333-3333-3333-3333-333333333333', '뉴비러너', 28, '남성', 180.0, 75.0, '처음 시작해요.');
 
 INSERT IGNORE INTO body_part (body_part_code, body_name, side, direction) VALUES
 ('B_NECK', '뒷목', NULL, 'BACK'),
