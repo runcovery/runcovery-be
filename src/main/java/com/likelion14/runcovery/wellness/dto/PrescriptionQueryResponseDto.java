@@ -29,6 +29,7 @@ public final class PrescriptionQueryResponseDto {
         private String title;
         private String summary;
         private Boolean isCompleted;
+        private Boolean completionSupported;
     }
 
     @Getter
@@ -55,6 +56,7 @@ public final class PrescriptionQueryResponseDto {
         private String title;
         private String summary;
         private Boolean isCompleted;
+        private Boolean completionSupported;
 
         private NutritionDetail nutritionDetail;
         private SkinDetail skinDetail;

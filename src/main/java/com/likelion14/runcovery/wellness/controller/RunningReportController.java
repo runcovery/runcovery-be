@@ -1,5 +1,7 @@
 package com.likelion14.runcovery.wellness.controller;
 
+import com.likelion14.runcovery.common.CurrentUserId;
+
 import com.likelion14.runcovery.wellness.dto.ReportRequestDto;
 import com.likelion14.runcovery.wellness.dto.ReportResponseDto;
 import com.likelion14.runcovery.wellness.dto.WellnessReportQueryResponseDto;
@@ -50,9 +52,10 @@ public class RunningReportController {
     })
     @PostMapping
     public ResponseEntity<ReportResponseDto> generateReport(
+            @CurrentUserId Long userId,
             @RequestBody ReportRequestDto request
     ) {
-        ReportResponseDto response = runningReportService.generateAndSaveReport(request);
+        ReportResponseDto response = runningReportService.generateAndSaveReport(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -64,7 +67,7 @@ public class RunningReportController {
     @ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
     @GetMapping
     public ResponseEntity<WellnessReportQueryResponseDto> getReport(
-            @RequestParam(defaultValue = "1") Long userId,
+            @CurrentUserId Long userId,
             @RequestParam(required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate reportDate
     ) {
@@ -79,7 +82,7 @@ public class RunningReportController {
     @GetMapping("/{reportId}")
     public ResponseEntity<WellnessReportQueryResponseDto> getReportById(
             @PathVariable Long reportId,
-            @RequestParam(defaultValue = "1") Long userId
+            @CurrentUserId Long userId
     ) {
         return ResponseEntity.ok(
                 wellnessReportQueryService.getById(userId, reportId)

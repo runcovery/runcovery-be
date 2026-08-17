@@ -3,6 +3,7 @@ import com.likelion14.runcovery.wellness.dto.SkinRecordResponseDto;
 import com.likelion14.runcovery.wellness.service.WellnessSkinRecordQueryService;
 
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.common.CurrentUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,7 @@ public class WellnessSkinRecordQueryController {
     @Operation(summary = "웰니스/피부기록 조회")
     @GetMapping("/skin/records")
     public ApiResponse<List<SkinRecordResponseDto>> getSkinRecords(
-            @RequestParam(name = "userId") Long userId,
+            @CurrentUserId Long userId,
             @RequestParam(name = "date", required = false)
             @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date
     ) {

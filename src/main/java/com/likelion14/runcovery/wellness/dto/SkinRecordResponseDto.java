@@ -6,7 +6,6 @@ import java.time.LocalDate;
 
 public record SkinRecordResponseDto(
         Long skinId,
-        Long userId,
         SkinRecordType type,
         LocalDate measuredDate,
         Integer totalScore,
@@ -16,13 +15,11 @@ public record SkinRecordResponseDto(
         Integer pores,
         Integer blemishes,
         Integer hydration,
-        Integer pigment,
-        String skinImage
+        Integer pigment
 ) {
     public static SkinRecordResponseDto from(SkinRecord record) {
         return new SkinRecordResponseDto(
                 record.getId(),
-                record.getUser().getId(),
                 record.getType(),
                 record.getMeasuredDate(),
                 record.getTotalScore(),
@@ -32,8 +29,7 @@ public record SkinRecordResponseDto(
                 record.getPores(),
                 record.getBlemishes(),
                 record.getHydration(),
-                record.getPigment(),
-                record.getSkinImage()
+                record.getPigment()
         );
     }
 }
