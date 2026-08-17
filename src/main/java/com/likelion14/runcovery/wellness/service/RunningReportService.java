@@ -61,10 +61,8 @@ public class RunningReportService {
         ReportResponseDto response = requestAiReport(request, context);
 
         runningReportPersistenceService.save(
-                context.user(),
                 context.activity(),
                 context.skinRecord(),
-                context.painfulParts(),
                 response
         );
         return response;
