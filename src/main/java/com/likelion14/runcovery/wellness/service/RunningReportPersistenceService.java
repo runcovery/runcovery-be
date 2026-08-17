@@ -3,11 +3,7 @@ package com.likelion14.runcovery.wellness.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.likelion14.runcovery.activity.ActivityRecord;
-import com.likelion14.runcovery.body.BodyIssue;
-import com.likelion14.runcovery.body.BodyIssueRepository;
-import com.likelion14.runcovery.body.BodyPart;
 import com.likelion14.runcovery.common.exception.CustomException;
-import com.likelion14.runcovery.user.User;
 import com.likelion14.runcovery.wellness.dto.ReportResponseDto;
 import com.likelion14.runcovery.wellness.entity.Prescription;
 import com.likelion14.runcovery.wellness.entity.SkinRecord;
@@ -22,11 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -38,58 +30,23 @@ public class RunningReportPersistenceService {
 
     private final ObjectMapper objectMapper;
     private final WellnessActivityRecordRepository wellnessActivityRecordRepository;
-    private final BodyIssueRepository bodyIssueRepository;
     private final WellnessReportRepository wellnessReportRepository;
     private final PrescriptionRepository prescriptionRepository;
 
     @Transactional
     public void save(
-            User user,
             ActivityRecord activity,
             SkinRecord skinRecord,
-            List<BodyPart> painfulParts,
             ReportResponseDto response
     ) {
         ActivityRecord lockedActivity = wellnessActivityRecordRepository
                 .findByIdForUpdate(activity.getId())
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "러닝 기록을 찾을 수 없습니다."));
 
-        synchronizeBodyIssues(user, painfulParts);
         WellnessReport savedReport = saveWellnessReport(lockedActivity, response);
         savePrescriptions(savedReport, skinRecord, response);
     }
 
-    private void synchronizeBodyIssues(User user, List<BodyPart> painfulParts) {
-        Map<String, BodyPart> selectedParts = painfulParts.stream()
-                .collect(Collectors.toMap(
-                        BodyPart::getBodyPartCode,
-                        Function.identity(),
-                        (left, right) -> left,
-                        LinkedHashMap::new
-                ));
-        List<BodyIssue> existingIssues = bodyIssueRepository.findAllByUser_IdAndIsPainfulTrue(user.getId());
-        Map<String, BodyIssue> existingByCode = existingIssues.stream()
-                .collect(Collectors.toMap(
-                        issue -> issue.getBodyPart().getBodyPartCode(),
-                        Function.identity()
-                ));
-
-        List<BodyIssue> issuesToSave = new ArrayList<>();
-        for (BodyIssue existingIssue : existingIssues) {
-            boolean isPainful = selectedParts.containsKey(existingIssue.getBodyPart().getBodyPartCode());
-            existingIssue.update(isPainful);
-            issuesToSave.add(existingIssue);
-        }
-        for (BodyPart selectedPart : painfulParts) {
-            if (!existingByCode.containsKey(selectedPart.getBodyPartCode())) {
-                issuesToSave.add(new BodyIssue(user, selectedPart, true));
-            }
-        }
-
-        if (!issuesToSave.isEmpty()) {
-            bodyIssueRepository.saveAll(issuesToSave);
-        }
-    }
 
     private WellnessReport saveWellnessReport(ActivityRecord activityRecord, ReportResponseDto response) {
         ReportResponseDto.RunningIntensity intensity = response.getIntensity();
