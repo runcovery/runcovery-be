@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MissionRepository extends JpaRepository<Mission, Long> {
-    Optional<Mission> findByMissionDate(LocalDate missionDate);
 
     // 운동 완료 횟수
     List<Mission> findByMissionDateBetweenAndIsCompletedTrueAndIsRestFalse(LocalDate start, LocalDate end);

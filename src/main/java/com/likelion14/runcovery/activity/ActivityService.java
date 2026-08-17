@@ -28,7 +28,7 @@ public class ActivityService {
 
         ActivityRecord activityRecord = saveOrUpdateActivity(user, request);
 
-        Mission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
+        Mission mission = missionRepository.findByConditionUserAndMissionDate(user, request.getRecordDate()).orElse(null);
 
         ActivitySyncResponseDto.MissionInfo missionInfo = null;
         if (mission != null && !mission.getIsRest()) {
