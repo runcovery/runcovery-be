@@ -8,7 +8,7 @@ import java.time.LocalDate;
  * 오늘과 전날의 AFTER_CARE 피부 점수 및 점수 차이 응답입니다.
  * difference 값은 오늘 점수 - 전날 점수이며, 양수는 개선된 점수입니다.
  */
-public record SkinScoreComparisonResponse(
+public record SkinScoreComparisonResponseDto(
         SkinRecordType type,
         SkinScoreSnapshot today,
         SkinScoreSnapshot previousDay,

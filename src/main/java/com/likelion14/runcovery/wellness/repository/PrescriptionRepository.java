@@ -5,9 +5,6 @@ import com.likelion14.runcovery.wellness.entity.Prescription;
 import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
-import com.likelion14.runcovery.wellness.enums.PrescriptionCategory;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -42,6 +39,12 @@ public interface PrescriptionRepository extends JpaRepository<Prescription, Long
             Long userId,
             PrescriptionCategory category
     );
+
+    Optional<Prescription> findFirstByWellnessReport_IdAndCategoryOrderByIdDesc(
+            Long reportId,
+            PrescriptionCategory category
+    );
+
     List<Prescription> findByPrescriptionDate(LocalDate prescriptionDate);
 
 

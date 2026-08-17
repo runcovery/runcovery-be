@@ -1,554 +1,297 @@
-생성만
-```markdown
-# 맞춤형 웰니스 러닝 리포트 API
+# Runcovery Wellness API
 
-## 1. 기능 개요
+현재 코드 기준의 wellness API 실행 방법과 Postman 통합 테스트 순서입니다.
 
-러닝 기록, 운동 당시 날씨, AFTER_RUN 피부 점수, 수면 컨디션, 운동 설문, 아픈 부위 정보를 기반으로 맞춤형 웰니스 리포트를 생성합니다.
+## 주요 기능
 
-생성된 리포트는 다음 정보를 포함합니다.
+- AFTER_RUN / AFTER_CARE 피부 스캔 및 날짜별 기록 조회
+- 전날 대비 AFTER_CARE 피부 점수 비교
+- 러닝·날씨·피부·컨디션·설문 기반 리포트 생성
+- 리포트와 카테고리별 처방전 조회
+- 통증 부위 기반 YouTube 회복 영상 추천
+- 피부·스트레칭 처방전 완료 상태 변경
+- X-Public-Id UUID 기반 사용자 식별
 
-- 오늘의 러닝 강도 점수
-- 러닝 강도별 코멘트
-- 수분/영양 처방
-- 피부 관리 처방
-- 아픈 부위 기반 스트레칭 처방
-- 실제 YouTube 스트레칭 영상
-- 회복 스트레칭 단계별 안내
+## 사용자 식별
 
-현재 회원가입 기능이 제거되어 테스트 사용자 ID는 `1`로 고정되어 있습니다.
+wellness API는 userId 또는 memberId 쿼리 파라미터를 사용하지 않습니다.
 
----
+사용자 등록 시 클라이언트가 생성한 UUID를 전달하고, 이후 사용자 전용 요청에는 다음 헤더를 추가합니다.
 
-## 2. 사전 준비
+~~~text
+X-Public-Id: 사용자 UUID
+~~~
 
-리포트 API를 호출하기 전에 아래 데이터가 필요합니다.
+서버의 @CurrentUserId Long userId는 UUID를 내부 DB PK로 변환한 값입니다.
 
-- `users.user_id = 1` 사용자 데이터
-- 당일 `activity_record` 러닝 기록
-- 당일 `today_condition` 수면 컨디션
-- 당일 `skin_record`의 `type = AFTER_RUN` 피부 스캔 기록
-- `body_part` 마스터 데이터
-- OpenAI API Key
-- OpenWeather API Key
-- YouTube Data API Key
-- Python 피부 분석 서버 실행
+## 환경변수와 서버 실행
 
-리포트 기준 날짜는 기본적으로 오늘 날짜입니다.
+~~~powershell
+$env:SPRING_AI_OPENAI_API_KEY="OpenAI API Key"
+$env:OPENWEATHER_API_KEY="OpenWeather API Key"
+$env:YOUTUBE_API_KEY="YouTube Data API Key"
+~~~
 
-과거 날짜를 사용하려면 해당 날짜에 러닝·피부·컨디션 데이터가 모두 존재해야 합니다.
+DB 접속 정보와 API Key는 Git에 커밋하지 않습니다. application.properties는 Git에서 제외되어 있으므로 환경별 설정이 필요합니다.
 
----
+Python 피부 분석 서버:
 
-## 3. API Key 설정
-
-PowerShell에서 아래 환경변수를 등록합니다.
-
-```powershell
-$env:SPRING_AI_OPENAI_API_KEY="OpenAI_API_KEY"
-$env:OPENWEATHER_API_KEY="OpenWeather_API_KEY"
-$env:YOUTUBE_API_KEY="YouTube_Data_API_KEY"
-```
-
-그 후 백엔드 서버를 재시작합니다.
-
-API Key를 README 또는 Git 저장소에 직접 작성하지 않습니다.
-
-현재 `application.properties`에 API Key가 직접 노출되어 있다면 보안을 위해 해당 키를 폐기하고 재발급하는 것을 권장합니다.
-
----
-
-## 4. Python 피부 분석 서버 실행
-
-별도의 PowerShell 창에서 실행합니다.
-
-```powershell
+~~~powershell
 cd C:\runcovery\skin-scan-main
-
 python -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
-```
+~~~
 
-정상 실행되면 다음 주소에서 API 문서를 확인할 수 있습니다.
+- Python 문서: http://localhost:8000/docs
+- Python multipart Key: image
+- Spring multipart Key: file
 
-```text
-http://localhost:8000/docs
-```
+Spring Boot:
 
-Python 서버가 실행되지 않은 상태에서 피부 스캔 API를 호출하면 연결 오류가 발생합니다.
-
----
-
-## 5. Spring Boot 서버 실행
-
-```powershell
+~~~powershell
 cd C:\runcovery\runcovery-be
-
 .\gradlew.bat bootRun
-```
+~~~
 
-기본 서버 주소:
+- API: http://localhost:8080
+- Swagger: http://localhost:8080/swagger-ui/index.html
 
-```text
-http://localhost:8080
-```
+## Postman Environment
 
-Swagger 주소:
+| 변수 | 값 |
+|---|---|
+| baseUrl | http://localhost:8080 |
+| publicId | 클라이언트가 생성한 UUID |
+| recordDate | 실제 테스트 당일 YYYY-MM-DD |
+| activityRecordId | 활동 저장 응답의 recordId |
+| reportId | 리포트 조회 응답의 reportId |
+| prescriptionId | 처방전 목록의 prescriptionId |
 
-```text
-http://localhost:8080/swagger-ui/index.html
-```
+사용자 등록 외 모든 요청에 X-Public-Id: {{publicId}}를 추가합니다.
 
----
+컨디션과 피부 스캔 날짜는 서버의 LocalDate.now()로 저장되므로 러닝 날짜와 시각도 실제 테스트 당일로 맞춥니다.
 
-# 6. Postman 테스트 순서
+## 통합 테스트 순서
 
-리포트 API는 기존에 저장된 러닝·피부·컨디션 데이터를 사용하므로 아래 순서대로 테스트해야 합니다.
+### 1. 사용자 등록
 
----
+PowerShell New-Guid 등으로 UUID를 생성합니다.
 
-## STEP 1. 러닝 기록 저장
-
-### 요청
-
-```http
-POST http://localhost:8080/activities/sync
-```
-
-### Headers
-
-```text
+~~~http
+POST {{baseUrl}}/users
 Content-Type: application/json
-```
+~~~
 
-### Body
+~~~json
+{
+  "userId": "{{publicId}}",
+  "nickname": "테스트러너",
+  "age": 25,
+  "gender": "남성",
+  "height": 175.0,
+  "weight": 70.0,
+  "runningExperience": "가끔 달리고 있어요."
+}
+~~~
 
-Postman에서 `Body > raw > JSON`을 선택합니다.
+### 2. 당일 컨디션 저장
 
-아래 예시의 `2026-08-14`는 실제 테스트 실행 날짜로 변경합니다.
+~~~http
+POST {{baseUrl}}/conditions
+X-Public-Id: {{publicId}}
+Content-Type: application/json
+~~~
 
-```json
+~~~json
+{
+  "bodyCondition": "FAIR",
+  "sleepQuality": "FAIR",
+  "painAreas": ["F_KNEE_L", "B_THIGH_R"]
+}
+~~~
+
+bodyCondition과 sleepQuality 허용값은 GOOD, FAIR, POOR입니다.
+
+### 3. 당일 러닝 기록 저장
+
+~~~http
+POST {{baseUrl}}/activities/sync
+X-Public-Id: {{publicId}}
+Content-Type: application/json
+~~~
+
+~~~json
 {
   "runningDuration": 1800,
-  "recordDate": "2026-08-14",
+  "recordDate": "{{recordDate}}",
   "distanceM": 5000,
   "avgPace": 360,
   "avgHeartRate": 145,
   "maxHeartRate": 170,
   "calories": 380,
   "cadence": 170,
-  "startTime": "2026-08-14T18:00:00",
-  "endTime": "2026-08-14T18:30:00",
+  "startTime": "2026-08-17T18:00:00",
+  "endTime": "2026-08-17T18:30:00",
   "lat": 37.5665,
   "lon": 126.9780
 }
-```
+~~~
 
-### 주요 필드
+응답의 data.recordId를 activityRecordId로 저장합니다.
 
-| 필드 | 설명 |
-|---|---|
-| runningDuration | 러닝 시간(초) |
-| recordDate | 러닝 기록 날짜 |
-| distanceM | 러닝 거리(m) |
-| avgPace | 평균 페이스(초/km) |
-| avgHeartRate | 평균 심박수 |
-| maxHeartRate | 최대 심박수 |
-| calories | 소모 칼로리 |
-| cadence | 케이던스 |
-| startTime | 러닝 시작 시간 |
-| endTime | 러닝 종료 시간 |
-| lat | 러닝 위치 위도 |
-| lon | 러닝 위치 경도 |
+### 4. AFTER_RUN 피부 스캔
 
-리포트 생성 시 `lat`, `lon`, `startTime`을 기준으로 운동 당시 날씨를 조회하므로 반드시 입력해야 합니다.
+~~~http
+POST {{baseUrl}}/wellness/skin/scan?type=AFTER_RUN
+X-Public-Id: {{publicId}}
+~~~
 
----
+Postman Body는 form-data, Key는 file, 타입은 File입니다. Content-Type은 직접 추가하지 않습니다.
 
-## STEP 2. 오늘의 수면 컨디션 저장
+### 5. 웰니스 리포트 생성
 
-### 요청
-
-```http
-POST http://localhost:8080/conditions
-```
-
-### Headers
-
-```text
+~~~http
+POST {{baseUrl}}/api/wellness/reports
+X-Public-Id: {{publicId}}
 Content-Type: application/json
-```
+~~~
 
-### Body
-
-```json
+~~~json
 {
-  "bodyCondition": "FAIR",
-  "sleepQuality": "FAIR",
-  "painAreas": [
-    "B_KNEE_L",
-    "F_THIGH_L"
-  ]
-}
-```
-
-### 가능한 bodyCondition 값
-
-```text
-GOOD
-FAIR
-POOR
-```
-
-### 가능한 sleepQuality 값
-
-```text
-GOOD
-FAIR
-POOR
-```
-
-### painAreas 예시
-
-```text
-B_KNEE_L
-F_THIGH_L
-B_CALF_R
-F_SHOULDER_L
-```
-
-`conditions` API는 현재 사용자 ID `1`과 오늘 날짜를 기준으로 컨디션을 저장합니다.
-
----
-
-## STEP 3. AFTER_RUN 피부 스캔
-
-### 요청
-
-```http
-POST http://localhost:8080/wellness/skin/scan?userId=1&type=AFTER_RUN
-```
-
-### Postman Body 설정
-
-1. `Body` 선택
-2. `form-data` 선택
-3. Key에 `file` 입력
-4. Key 타입을 `File`로 변경
-5. 이미지 파일 선택
-6. `Content-Type` 헤더를 직접 추가하지 않음
-
-### Form-data 예시
-
-| Key | Type | Value |
-|---|---|---|
-| file | File | 러닝 후 피부 이미지 |
-
-주의할 점:
-
-- Key 이름은 반드시 `file`이어야 합니다.
-- 타입은 `Text`가 아니라 `File`이어야 합니다.
-- Body 타입은 `raw`가 아니라 `form-data`여야 합니다.
-- Python 서버의 필드명이 `image`여도 Spring API에서는 `file`을 사용합니다.
-- Spring 서버가 내부적으로 `file`을 Python 서버의 `image` 필드로 변환합니다.
-
-정상적으로 저장되면 `skin_record`에 `AFTER_RUN` 데이터가 저장됩니다.
-
----
-
-## STEP 4. 웰니스 러닝 리포트 생성
-
-### 요청
-
-```http
-POST http://localhost:8080/api/wellness/reports
-```
-
-### Headers
-
-```text
-Content-Type: application/json
-```
-
-### Body
-
-Postman에서 `Body > raw > JSON`을 선택합니다.
-
-```json
-{
-  "recordDate": "2026-08-14",
+  "recordDate": "{{recordDate}}",
+  "activityRecordId": {{activityRecordId}},
   "survey": {
     "feeling": "NORMAL",
     "energy": "TIRED",
     "sweat": "MODERATE"
   },
-  "painPartCodes": [
-    "B_KNEE_L",
-    "F_THIGH_L"
-  ]
+  "painPartCodes": ["F_KNEE_L", "B_THIGH_R"]
 }
-```
+~~~
 
-`recordDate`는 STEP 1의 러닝 기록 날짜와 STEP 3의 피부 스캔 날짜와 같아야 합니다.
+설문 Enum:
 
-`activityRecordId`는 선택 필드입니다.
+- feeling: GREAT, NORMAL, EXHAUSTED
+- energy: DEPLETED, TIRED, ENERGETIC
+- sweat: LOW, MODERATE, HIGH
 
-특정 러닝 기록 ID를 직접 지정하려면 다음처럼 입력합니다.
+필수 선행 데이터는 같은 사용자·날짜의 러닝 기록, 최신 AFTER_RUN 피부 기록, 최신 컨디션 기록입니다. 러닝 기록에는 위도·경도·시작 시각이 필요합니다.
 
-```json
-{
-  "recordDate": "2026-08-14",
-  "activityRecordId": 1,
-  "survey": {
-    "feeling": "NORMAL",
-    "energy": "TIRED",
-    "sweat": "MODERATE"
-  },
-  "painPartCodes": [
-    "B_KNEE_L",
-    "F_THIGH_L"
-  ]
-}
-```
+응답에는 intensity, hydration, skin, stretching, recoveryVideos, uncoveredPainPartCodes가 포함됩니다.
 
-`activityRecordId`를 생략하면 `recordDate`와 사용자 ID `1`을 기준으로 러닝 기록을 조회합니다.
+동일 상체 또는 동일 하체는 영상 1개, 상체와 하체가 함께 선택된 경우에만 최대 2개를 반환합니다. 영상 자막을 분석하지 않으므로 steps는 응답에 노출하지 않습니다.
 
----
+### 6. 리포트 조회
 
-## 7. 설문 Enum 값
+~~~http
+GET {{baseUrl}}/api/wellness/reports
+GET {{baseUrl}}/api/wellness/reports?reportDate={{recordDate}}
+GET {{baseUrl}}/api/wellness/reports/{{reportId}}
+X-Public-Id: {{publicId}}
+~~~
 
-### feeling
+### 7. 처방전 목록과 상세 조회
 
-| 값 | 화면 의미 |
-|---|---|
-| GREAT | 너무 좋았어요! |
-| NORMAL | 보통이에요 |
-| EXHAUSTED | 너무 힘들었어요. |
+~~~http
+GET {{baseUrl}}/api/wellness/prescriptions?reportId={{reportId}}
+GET {{baseUrl}}/api/wellness/prescriptions/{{prescriptionId}}
+X-Public-Id: {{publicId}}
+~~~
 
-### energy
+- NUTRITION: completionSupported=false, 러닝 시간·칼로리 상세
+- SKIN: completionSupported=true, 연결된 AFTER_RUN 피부 상세
+- STRETCH: completionSupported=true, 영상 URL과 추천 이유
 
-| 값 | 화면 의미 |
-|---|---|
-| DEPLETED | 완전 방전이에요 |
-| TIRED | 적당히 지쳤어요 |
-| ENERGETIC | 에너지가 넘쳐요! |
+### 8. 피부·스트레칭 완료 상태 변경
 
-### sweat
+피부진단 보기 또는 영상 보러가기 성공 후 호출합니다.
 
-| 값 | 화면 의미 |
-|---|---|
-| LOW | 쾌적해요(거의 안 흘림) |
-| MODERATE | 적당히 났어요 |
-| HIGH | 흠뻑 젖었어요 |
-
----
-
-## 8. 정상 응답 예시
-
-HTTP Status:
-
-```text
-201 Created
-```
-
-Response Body:
-
-```json
-{
-  "intensity": {
-    "score": 7,
-    "level": "MODERATE",
-    "comment": "평균 심박수 145bpm과 30분 러닝 시간을 고려하면 오늘은 중간 강도의 운동이었어요."
-  },
-  "hydration": {
-    "title": "운동 후 수분 보충",
-    "solution": "추정 수분 손실량을 고려해 물과 전해질을 충분히 보충해 주세요."
-  },
-  "skin": {
-    "title": "운동 후 피부 진정 관리",
-    "solution": "운동 후 땀과 열감을 씻어내고 수분 크림으로 피부를 진정시켜 주세요."
-  },
-  "stretching": {
-    "title": "무릎과 허벅지 스트레칭",
-    "solution": "무릎과 허벅지 주변을 중심으로 통증이 없는 범위에서 천천히 스트레칭해 주세요."
-  },
-  "recoveryVideo": {
-    "title": "오금, 허벅지 앞 스트레칭 영상",
-    "videoUrl": "https://www.youtube.com/watch?v=실제검색된영상ID",
-    "sourceTitle": "실제 YouTube 영상 제목",
-    "durationSeconds": 175,
-    "summaryBasis": "VIDEO_METADATA_NOT_TRANSCRIPT",
-    "steps": [
-      {
-        "label": "STEP 1",
-        "description": "오금 주변을 천천히 늘리고 20초간 유지해 주세요."
-      },
-      {
-        "label": "STEP 2",
-        "description": "허벅지 앞쪽을 당기되 무릎에 통증이 생기면 즉시 중단해 주세요."
-      }
-    ]
-  }
-}
-```
-
----
-
-## 9. DB 저장 결과 확인
-
-리포트 생성 후 아래 테이블에 데이터가 저장됩니다.
-
-```sql
-SELECT *
-FROM activity_record
-WHERE user_id = 1
-ORDER BY record_date DESC;
-```
-
-```sql
-SELECT *
-FROM skin_record
-WHERE user_id = 1
-ORDER BY measured_date DESC;
-```
-
-```sql
-SELECT *
-FROM today_condition
-WHERE user_id = 1
-ORDER BY condition_date DESC;
-```
-
-```sql
-SELECT *
-FROM body_issue
-WHERE user_id = 1;
-```
-
-```sql
-SELECT *
-FROM wellness_report
-WHERE user_id = 1
-ORDER BY report_id DESC;
-```
-
-현재 리포트 생성 API를 여러 번 호출하면 `wellness_report` 데이터가 중복 저장될 수 있습니다.
-
----
-
-## 10. 오류 해결
-
-### Required part 'file' is not present
-
-피부 스캔 API에서 발생하는 오류입니다.
-
-확인 사항:
-
-- Body가 `form-data`인지 확인
-- Key 이름이 `file`인지 확인
-- Key 타입이 `File`인지 확인
-- 이미지 파일이 실제로 선택되어 있는지 확인
-
----
-
-### Content-Type is not supported
-
-리포트 API에서 발생하는 오류입니다.
-
-리포트 API는 JSON 요청이므로 다음과 같이 설정합니다.
-
-```text
-Body > raw > JSON
+~~~http
+PATCH {{baseUrl}}/api/wellness/prescriptions/SKIN/complete?reportId={{reportId}}
+X-Public-Id: {{publicId}}
 Content-Type: application/json
-```
+~~~
 
-피부 스캔 API는 JSON이 아니라 `form-data`를 사용합니다.
+~~~json
+{
+  "isCompleted": true
+}
+~~~
 
----
+스트레칭은 SKIN을 STRETCH로 변경합니다. NUTRITION은 완료 대상이 아니며 400을 반환합니다.
 
-### 필수 파라미터가 없습니다: memberId
+### 9. AFTER_CARE 피부 스캔
 
-현재 코드 기준 피부 스캔 API의 파라미터명은 `memberId`가 아니라 `userId`입니다.
+~~~http
+POST {{baseUrl}}/wellness/skin/scan?type=AFTER_CARE
+X-Public-Id: {{publicId}}
+~~~
 
-```text
-/wellness/skin/scan?userId=1&type=AFTER_RUN
-```
+Body 설정은 AFTER_RUN과 같습니다.
 
-리포트 API는 사용자 ID를 별도로 받지 않으며 내부적으로 사용자 ID `1`을 사용합니다.
+### 10. 날짜별 피부 기록 조회
 
----
+~~~http
+GET {{baseUrl}}/wellness/skin/records?date={{recordDate}}
+X-Public-Id: {{publicId}}
+~~~
 
-### YouTube API Key가 설정되지 않았습니다
+### 11. 전날 대비 AFTER_CARE 비교
 
-다음 환경변수를 등록한 후 백엔드 서버를 재시작합니다.
+~~~http
+GET {{baseUrl}}/wellness/skin/comparison?date={{recordDate}}
+X-Public-Id: {{publicId}}
+~~~
 
-```powershell
-$env:YOUTUBE_API_KEY="YouTube_Data_API_Key"
-```
+기준일과 정확히 하루 전 날짜의 AFTER_CARE 기록이 모두 필요합니다.
 
----
+## DB 확인
 
-### 당일 AFTER_RUN 피부 기록을 찾을 수 없음
+~~~sql
+SELECT * FROM conditions
+WHERE user_id = :user_id
+ORDER BY condition_date DESC, condition_id DESC;
 
-리포트 생성 전에 반드시 아래 API를 호출해야 합니다.
+SELECT * FROM skin_record
+WHERE user_id = :user_id
+ORDER BY measured_date DESC, skin_id DESC;
 
-```http
-POST http://localhost:8080/wellness/skin/scan?userId=1&type=AFTER_RUN
-```
+SELECT wr.*
+FROM wellness_report wr
+JOIN activity_record ar ON ar.record_id = wr.record_id
+WHERE ar.user_id = :user_id
+ORDER BY wr.report_date DESC, wr.report_id DESC;
 
-또한 피부 스캔 날짜와 러닝 기록의 `recordDate`가 같아야 합니다.
+SELECT p.*
+FROM prescription p
+JOIN wellness_report wr ON wr.report_id = p.report_id
+JOIN activity_record ar ON ar.record_id = wr.record_id
+WHERE ar.user_id = :user_id
+ORDER BY p.prescription_date DESC, p.prescription_id DESC;
+~~~
 
----
+## 자주 발생하는 오류
 
-### 당일 수면 컨디션을 찾을 수 없음
+- X-Public-Id 헤더 필요: Headers에 X-Public-Id를 추가합니다.
+- 유효하지 않은 사용자: POST /users로 등록한 UUID인지 확인합니다.
+- Required part file is not present: form-data / file / File 설정을 확인합니다.
+- Content-Type is not supported: 피부는 form-data, 리포트와 PATCH는 raw JSON입니다.
+- 피부 분석 서버 연결 실패: Python 서버 127.0.0.1:8000을 확인합니다.
+- AFTER_RUN 기록 없음: 러닝 날짜와 같은 날 AFTER_RUN 스캔이 필요합니다.
+- 컨디션 기록 없음: 같은 사용자·날짜의 POST /conditions 기록이 필요합니다.
+- Incorrect string value: MariaDB/MySQL 문자셋을 utf8mb4로 맞춥니다.
 
-리포트 생성 전에 다음 API를 호출해야 합니다.
+## 현재 코드 주의사항
 
-```http
-POST http://localhost:8080/conditions
-```
+- 동일 activityRecordId로 리포트를 반복 생성하면 중복 저장될 수 있습니다.
+- 피부 이미지 원본 대신 업로드 파일명만 skinImage에 저장합니다.
+- YouTube 자막은 분석하지 않고 메타데이터와 선택 부위로 추천 이유를 만듭니다.
+- AI 프롬프트에는 sleepQuality가 포함되지만 bodyCondition 반영은 현재 누락되어 있습니다.
+- 프론트와 백엔드 Origin이 다르면 X-Public-Id를 허용하는 CORS 설정이 필요합니다.
 
----
+## 빌드와 테스트
 
-### 운동 당시 날씨 조회 실패
+~~~powershell
+.\gradlew.bat clean test
+~~~
 
-다음 값을 확인합니다.
-
-- `openweather.api.key` 설정 여부
-- 러닝 기록의 `lat`, `lon` 값
-- 러닝 기록의 `startTime` 값
-- 인터넷 연결 상태
-
----
-
-### Python 피부 분석 서버 연결 실패
-
-다음 서버가 실행 중인지 확인합니다.
-
-```text
-http://localhost:8000/scan
-```
-
-실행 명령:
-
-```powershell
-cd C:\runcovery\skin-scan-main
-
-python -m uvicorn src.app.main:app --host 127.0.0.1 --port 8000
-```
-
----
-
-## 11. API 문서
-
-Springdoc Swagger:
-
-```text
-http://localhost:8080/swagger-ui/index.html
-```
-
-Python 피부 분석 서버 Swagger:
-
-```text
-http://localhost:8000/docs
-```
-```
+현재 자동 테스트는 컨텍스트 로딩 1건뿐입니다. 사용자 격리, 외부 API 실패, 트랜잭션 롤백, 완료 처리와 영상 그룹화 통합 테스트를 추가해야 합니다.

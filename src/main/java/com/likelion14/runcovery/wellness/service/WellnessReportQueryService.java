@@ -3,6 +3,7 @@ package com.likelion14.runcovery.wellness.service;
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.wellness.dto.WellnessReportQueryResponseDto;
 import com.likelion14.runcovery.wellness.entity.WellnessReport;
+import com.likelion14.runcovery.wellness.enums.RunningIntensityLevel;
 import com.likelion14.runcovery.wellness.repository.WellnessReportRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -53,7 +54,6 @@ public class WellnessReportQueryService {
     private WellnessReportQueryResponseDto toResponse(WellnessReport report) {
         return WellnessReportQueryResponseDto.builder()
                 .reportId(report.getId())
-                .userId(report.getActivityRecord().getUser().getId())
                 .activityRecordId(report.getActivityRecord().getId())
                 .reportDate(report.getReportDate())
                 .runningIntensity(report.getRunningIntensity())
@@ -63,18 +63,8 @@ public class WellnessReportQueryService {
     }
 
     private String toIntensityLevel(Integer score) {
-        if (score == null) {
-            return null;
-        }
-        if (score <= 3) {
-            return "LOW";
-        }
-        if (score <= 7) {
-            return "MODERATE";
-        }
-        return "HIGH";
+        return score == null ? null : RunningIntensityLevel.fromScore(score).name();
     }
-
     private void validateUserId(Long userId) {
         if (userId == null || userId <= 0) {
             throw new CustomException(HttpStatus.BAD_REQUEST, "userId는 1 이상의 값이어야 합니다.");

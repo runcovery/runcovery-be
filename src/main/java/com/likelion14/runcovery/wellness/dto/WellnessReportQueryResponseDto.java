@@ -14,7 +14,6 @@ import java.time.LocalDate;
 public class WellnessReportQueryResponseDto {
 
     private Long reportId;
-    private Long userId;
     private Long activityRecordId;
     private LocalDate reportDate;
     private Integer runningIntensity;

@@ -1,9 +1,10 @@
 package com.likelion14.runcovery.wellness.controller;
-import com.likelion14.runcovery.wellness.entity.SkinRecord;
+import com.likelion14.runcovery.wellness.dto.SkinRecordResponseDto;
 import com.likelion14.runcovery.wellness.enums.SkinRecordType;
 import com.likelion14.runcovery.wellness.service.WellnessSkinScanService;
 
 import com.likelion14.runcovery.common.ApiResponse;
+import com.likelion14.runcovery.common.CurrentUserId;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -25,12 +26,14 @@ public class WellnessSkinScanController {
 
     @Operation(summary = "웰니스/피부스캔")
     @PostMapping(value = "/skin/scan", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ApiResponse<SkinRecord> scanSkin(
-            @RequestParam(name = "userId") Long userId,
+    public ApiResponse<SkinRecordResponseDto> scanSkin(
+            @CurrentUserId Long userId,
             @RequestParam(name = "type", defaultValue = "AFTER_RUN") SkinRecordType type,
             @RequestPart("file") MultipartFile image
     ) {
-        return ApiResponse.ok(wellnessSkinScanService.scanAndSave(userId, type, image));
+        return ApiResponse.ok(SkinRecordResponseDto.from(
+                wellnessSkinScanService.scanAndSave(userId, type, image)
+        ));
     }
 }
 

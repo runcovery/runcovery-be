@@ -10,6 +10,8 @@ import java.util.Optional;
 /** wellness_report 저장 및 사용자별 리포트 조회를 담당합니다. */
 public interface WellnessReportRepository extends JpaRepository<WellnessReport, Long> {
 
+    Optional<WellnessReport> findFirstByActivityRecord_IdOrderByIdDesc(Long activityRecordId);
+
     @EntityGraph(attributePaths = {"activityRecord", "activityRecord.user"})
     Optional<WellnessReport> findFirstByActivityRecord_User_IdOrderByReportDateDescIdDesc(Long userId);
 

@@ -1,5 +1,5 @@
 package com.likelion14.runcovery.wellness.service;
-import com.likelion14.runcovery.wellness.dto.SkinScoreComparisonResponse;
+import com.likelion14.runcovery.wellness.dto.SkinScoreComparisonResponseDto;
 import com.likelion14.runcovery.wellness.entity.SkinRecord;
 import com.likelion14.runcovery.wellness.enums.SkinRecordType;
 import com.likelion14.runcovery.wellness.repository.SkinRecordQueryRepository;
@@ -23,7 +23,7 @@ public class WellnessSkinScoreComparisonService {
     private final UserRepository userRepository;
     private final SkinRecordQueryRepository skinRecordQueryRepository;
 
-    public SkinScoreComparisonResponse compare(Long userId, LocalDate measuredDate) {
+    public SkinScoreComparisonResponseDto compare(Long userId, LocalDate measuredDate) {
         validateUserId(userId);
 
         if (!userRepository.existsById(userId)) {
@@ -36,11 +36,11 @@ public class WellnessSkinScoreComparisonService {
         SkinRecord todayRecord = findRecord(userId, today, "오늘");
         SkinRecord previousDayRecord = findRecord(userId, previousDay, "전날");
 
-        return new SkinScoreComparisonResponse(
+        return new SkinScoreComparisonResponseDto(
                 COMPARISON_TYPE,
-                SkinScoreComparisonResponse.SkinScoreSnapshot.from(todayRecord),
-                SkinScoreComparisonResponse.SkinScoreSnapshot.from(previousDayRecord),
-                SkinScoreComparisonResponse.SkinScoreDifference.between(todayRecord, previousDayRecord)
+                SkinScoreComparisonResponseDto.SkinScoreSnapshot.from(todayRecord),
+                SkinScoreComparisonResponseDto.SkinScoreSnapshot.from(previousDayRecord),
+                SkinScoreComparisonResponseDto.SkinScoreDifference.between(todayRecord, previousDayRecord)
         );
     }
 

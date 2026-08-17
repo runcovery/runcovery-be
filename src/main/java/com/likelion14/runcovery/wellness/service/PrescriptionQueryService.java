@@ -79,6 +79,9 @@ public class PrescriptionQueryService {
         if (isCompleted == null) {
             throw new CustomException(HttpStatus.BAD_REQUEST, "isCompleted 값은 필수입니다.");
         }
+        if (!isCompletionSupported(category)) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "수분/영양 처방은 완료 처리 대상이 아닙니다.");
+        }
 
         Long targetReportId = resolveReportId(userId, reportId);
         Prescription prescription = prescriptionRepository
@@ -136,6 +139,7 @@ public class PrescriptionQueryService {
                 .title(prescription.getTitle())
                 .summary(prescription.getSummary())
                 .isCompleted(Boolean.TRUE.equals(prescription.getIsCompleted()))
+                .completionSupported(isCompletionSupported(prescription.getCategory()))
                 .build();
     }
 
@@ -149,7 +153,8 @@ public class PrescriptionQueryService {
                         .categoryName(toCategoryName(prescription.getCategory()))
                         .title(prescription.getTitle())
                         .summary(prescription.getSummary())
-                        .isCompleted(Boolean.TRUE.equals(prescription.getIsCompleted()));
+                        .isCompleted(Boolean.TRUE.equals(prescription.getIsCompleted()))
+                        .completionSupported(isCompletionSupported(prescription.getCategory()));
 
         switch (prescription.getCategory()) {
             case NUTRITION -> response.nutritionDetail(toNutritionDetail(prescription));
@@ -270,6 +275,9 @@ public class PrescriptionQueryService {
                 : prescription.getDetail();
     }
 
+    private boolean isCompletionSupported(PrescriptionCategory category) {
+        return category == PrescriptionCategory.SKIN || category == PrescriptionCategory.STRETCH;
+    }
     private String toCategoryName(PrescriptionCategory category) {
         return switch (category) {
             case NUTRITION -> "수분/영양";
