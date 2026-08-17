@@ -4,8 +4,7 @@ import com.likelion14.runcovery.common.OpenAiService;
 import com.likelion14.runcovery.common.exception.CustomException;
 import com.likelion14.runcovery.common.weather.WeatherResponseDto;
 import com.likelion14.runcovery.common.weather.WeatherService;
-import com.likelion14.runcovery.goal.FutureGoal;
-import com.likelion14.runcovery.goal.FutureGoalRepository;
+import com.likelion14.runcovery.goal.*;
 import com.likelion14.runcovery.mission.MissionRepository;
 import com.likelion14.runcovery.mission.Mission;
 import com.likelion14.runcovery.user.User;
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -33,6 +33,8 @@ public class HomeService {
     private final FutureGoalRepository futureGoalRepository;
     private final MissionRepository missionRepository;
     private final PrescriptionRepository prescriptionRepository;
+    private final WeeklyGoalRepository weeklyGoalRepository;
+    private final WeeklyScheduleRepository weeklyScheduleRepository;
     private final WeatherService weatherService;
     private final OpenAiService openAiService;
 
@@ -96,6 +98,25 @@ public class HomeService {
 
         List<Prescription> prescriptions = prescriptionRepository.findBySkinRecordUserAndPrescriptionDate(user, today);
         Mission mission = missionRepository.findByConditionUserAndMissionDate(user, today).orElse(null);
+
+        // 이번주 스케줄 완료 여부 확인
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+        WeeklyGoal weeklyGoal = weeklyGoalRepository.findByUserAndCreatedAtBetween(
+                user, startOfWeek.atStartOfDay(), endOfWeek.atTime(23, 59, 59)).orElse(null);
+
+        if (weeklyGoal != null) {
+            long completedThisWeek = missionRepository
+                    .findByConditionUserAndMissionDateBetweenAndIsCompletedTrue(user, startOfWeek, endOfWeek)
+                    .stream()
+                    .filter(m -> !m.getIsRest())
+                    .count();
+            int totalSchedules = weeklyScheduleRepository.findByWeeklyGoal(weeklyGoal).size();
+
+            if (completedThisWeek >= totalSchedules && prescriptions.isEmpty() && mission == null) {
+                return "이번주 스케줄을 모두 완료했어요! 다음주도 화이팅이에요.";
+            }
+        }
 
         if (!prescriptions.isEmpty()) {
             // 처방전 리포트 생성 후

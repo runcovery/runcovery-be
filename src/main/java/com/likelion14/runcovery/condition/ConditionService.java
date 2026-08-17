@@ -66,7 +66,7 @@ public class ConditionService {
 
         // 4. OpenAI 응답을 임시로 conditionTitle, conditionFeedback만 파싱
         ConditionResponseDto result = openAiService.getStructuredCompletion(
-                buildSystemPrompt(), buildUserPrompt(user, request, completedCount, restCount, lastRunDateStr), ConditionResponseDto.class);
+                buildSystemPrompt(), buildConditionPrompt(user, request, completedCount, restCount, lastRunDateStr), ConditionResponseDto.class);
 
         // 5. 분석 결과 저장
         try {
@@ -119,7 +119,7 @@ public class ConditionService {
                 """;
     }
 
-    private String buildUserPrompt(User user, ConditionRequestDto request,
+    private String buildConditionPrompt(User user, ConditionRequestDto request,
                                    int completedCount, int restCount, String lastRunDate) {
         return String.format("""
             사용자 정보: %s, %d세, %.1fkg,
