@@ -1,5 +1,6 @@
 package com.likelion14.runcovery.user;
 
+import com.likelion14.runcovery.activity.ActivityRecord;
 import com.likelion14.runcovery.activity.ActivityRecordRepository;
 import com.likelion14.runcovery.common.OpenAiService;
 import com.likelion14.runcovery.common.exception.CustomException;
@@ -22,9 +23,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.TextStyle;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -41,6 +44,14 @@ public class UserService {
     private final SkinRecordRepository skinRecordRepository;
     private final OpenAiService openAiService;
 
+    private final Random random = new Random();
+
+    private static final int ACTIVITY_SEED_DAYS = 14;
+    private static final int SKIN_SEED_DAYS = 7;
+    private static final double SEED_JITTER_PERCENT = 10.0;
+    private static final double DEMO_LAT = 37.5665;
+    private static final double DEMO_LON = 126.9780;
+
     public UserCreateResponseDto createUser(UserCreateRequestDto request) {
         if (userRepository.findByPublicId(request.getUserId()).isPresent()) {
             throw new CustomException(HttpStatus.CONFLICT, "이미 등록된 userId입니다");
@@ -55,7 +66,86 @@ public class UserService {
                 request.getRunningExperience()
         );
         User savedUser = userRepository.save(user);
+        seedDemoData(savedUser);
         return new UserCreateResponseDto(savedUser);
+    }
+
+    // 심사/데모용 초기 데이터: 실패해도 회원가입 자체는 막지 않는다.
+    private void seedDemoData(User user) {
+        try {
+            seedActivityRecords(user);
+            seedSkinRecords(user);
+        } catch (RuntimeException exception) {
+            log.error("데모 데이터 생성 실패: userId={}", user.getId(), exception);
+        }
+    }
+
+    private void seedActivityRecords(User user) {
+        LocalDate today = LocalDate.now();
+        int baseDistance = 1000 + random.nextInt(7001);
+        int basePace = 300 + random.nextInt(211);
+        int baseAvgHeartRate = 130 + random.nextInt(46);
+
+        for (int offset = ACTIVITY_SEED_DAYS - 1; offset >= 0; offset--) {
+            LocalDate recordDate = today.minusDays(offset);
+
+            int distanceM = clamp(jitterPercent(baseDistance, SEED_JITTER_PERCENT), 1000, 8000);
+            int avgPace = clamp(jitterPercent(basePace, SEED_JITTER_PERCENT), 300, 510);
+            int avgHeartRate = clamp(baseAvgHeartRate + jitterAbsolute(8), 130, 175);
+            int maxHeartRate = avgHeartRate + 15 + random.nextInt(11);
+            int runningDuration = (int) Math.round(distanceM / 1000.0 * avgPace);
+            int calories = (int) Math.round(distanceM * 0.065);
+            int cadence = 155 + random.nextInt(21);
+
+            LocalDateTime startTime = recordDate.atTime(7, random.nextInt(60));
+            LocalDateTime endTime = startTime.plusSeconds(runningDuration);
+
+            activityRecordRepository.save(new ActivityRecord(
+                    user, runningDuration, recordDate, distanceM, avgPace, avgHeartRate, maxHeartRate,
+                    calories, cadence, startTime, endTime, DEMO_LAT, DEMO_LON));
+        }
+    }
+
+    private void seedSkinRecords(User user) {
+        LocalDate today = LocalDate.now();
+        for (int offset = 1; offset <= SKIN_SEED_DAYS; offset++) {
+            LocalDate measuredDate = today.minusDays(offset);
+            saveSkinRecord(user, SkinRecordType.AFTER_RUN, measuredDate);
+            saveSkinRecord(user, SkinRecordType.AFTER_CARE, measuredDate);
+        }
+    }
+
+    private void saveSkinRecord(User user, SkinRecordType type, LocalDate measuredDate) {
+        int redness = randomSkinScore();
+        int oiliness = randomSkinScore();
+        int texture = randomSkinScore();
+        int pores = randomSkinScore();
+        int blemishes = randomSkinScore();
+        int hydration = randomSkinScore();
+        int pigment = randomSkinScore();
+
+        SkinRecord skinRecord = new SkinRecord(user, type, measuredDate,
+                redness, oiliness, texture, pores, blemishes, hydration, pigment);
+        skinRecord.setTotalScore(Math.round(
+                (redness + oiliness + texture + pores + blemishes + hydration + pigment) / 7.0f));
+        skinRecordRepository.save(skinRecord);
+    }
+
+    private int randomSkinScore() {
+        return 40 + random.nextInt(51);
+    }
+
+    private int jitterPercent(int base, double percent) {
+        double factor = 1 + (random.nextDouble() * 2 - 1) * percent / 100.0;
+        return (int) Math.round(base * factor);
+    }
+
+    private int jitterAbsolute(int maxDelta) {
+        return random.nextInt(maxDelta * 2 + 1) - maxDelta;
+    }
+
+    private int clamp(int value, int min, int max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     public UserResponseDto getMyInfo(Long userId) {
