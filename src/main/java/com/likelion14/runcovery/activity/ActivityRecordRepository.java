@@ -19,7 +19,7 @@ public interface ActivityRecordRepository extends JpaRepository<ActivityRecord, 
     // 최근 10회 러닝 기록 (최대 거리 계산용)
     List<ActivityRecord> findTop10ByUserOrderByRecordDateDesc(User user);
 
-    // 최근 7회 활동 기록 조회
+    // 최근 7회 활동 기록 조회 (미션 생성, 주간 목표 생성 프롬프트 등에서 사용)
     List<ActivityRecord> findTop7ByUserOrderByRecordDateDesc(User user);
 
     // 유저의 이번주 완료된 미션 기반 소모 칼로리 합계 조회
