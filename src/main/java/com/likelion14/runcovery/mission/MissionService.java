@@ -68,6 +68,19 @@ public class MissionService {
         log.info("주간목표 조회 완료: {}", weeklyGoal.getWeeklyGoal());
         log.info("주간목표 조회 완료: {}", String.join(", ", schedules));
 
+        long completedThisWeek = missionRepository
+                .findByConditionUserAndMissionDateBetweenAndIsCompletedTrue(user, startOfWeek, endOfWeek)
+                .stream()
+                .filter(m -> !m.getIsRest())
+                .count();
+
+        if (completedThisWeek >= schedules.size()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "이번주 스케줄을 모두 완료했습니다.");
+        }
+
+        String todaySchedule = schedules.get((int) completedThisWeek);
+        log.info("오늘 스케줄: {}", todaySchedule);
+
         // 4. 현재 날씨 조회
         WeatherResponseDto currentWeather = weatherService.getCurrentWeather(lat, lon);
 
@@ -92,7 +105,7 @@ public class MissionService {
         log.info("OpenAI 요청 시작");
 
         MissionAiResult aiResult = openAiService.getStructuredCompletion(
-                buildSystemPrompt(), buildMissionPrompt(user, condition, weeklyGoal, schedules, currentWeather, currentMaxDuration, avgHeartRate, avgPace), MissionAiResult.class);
+                buildSystemPrompt(), buildMissionPrompt(user, condition, weeklyGoal, todaySchedule, currentWeather, currentMaxDuration, avgHeartRate, avgPace), MissionAiResult.class);
 
         log.info("OpenAI 응답 완료");
 
@@ -129,10 +142,12 @@ public class MissionService {
 
     public MissionResponseDto.Status getTodayMission(long userId) {
 
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
-
-        LocalDate today = LocalDate.now();
 
         Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .orElse(null);
@@ -145,6 +160,21 @@ public class MissionService {
                 .orElse(null);
 
         if (mission == null) {
+            WeeklyGoal weeklyGoal = weeklyGoalRepository.findByUserAndCreatedAtBetween(
+                    user, startOfWeek.atStartOfDay(), endOfWeek.atTime(23, 59, 59)).orElse(null);
+
+            if (weeklyGoal != null) {
+                long completedThisWeek = missionRepository
+                        .findByConditionUserAndMissionDateBetweenAndIsCompletedTrue(user, startOfWeek, endOfWeek)
+                        .stream()
+                        .filter(m -> !m.getIsRest())
+                        .count();
+                int totalSchedules = weeklyScheduleRepository.findByWeeklyGoal(weeklyGoal).size();
+
+                if (completedThisWeek >= totalSchedules) {
+                    return MissionResponseDto.Status.weekCompleted();
+                }
+            }
             return MissionResponseDto.Status.noMission();
         }
 
@@ -180,7 +210,7 @@ public class MissionService {
     }
 
     private String buildMissionPrompt(User user, Condition condition,
-                                   WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather,
+                                   WeeklyGoal weeklyGoal, String todaySchedule, WeatherResponseDto currentWeather,
                                    int currentMaxDuration, int avgHeartRate, int avgPace) {
         String maxDurationText = currentMaxDuration == 0 ? "기록 없음" : currentMaxDuration + "분";
         return String.format("""
@@ -189,7 +219,7 @@ public class MissionService {
                         수면: %s
                         오늘의 컨디션 분석: %s
                         주간 목표: %s
-                        주간 스케줄: %s
+                        오늘 스케줄: %s
                         주간 운동 가능 횟수: %d회
                         1회 운동 가능 시간: %d분
                         최근 7일 평균 심박수: %d
@@ -204,7 +234,7 @@ public class MissionService {
                 condition.getSleepQuality().getDescription(),
                 condition.getConditionFeedback(),
                 weeklyGoal.getWeeklyGoal(),
-                schedules,
+                todaySchedule,
                 weeklyGoal.getFutureGoal().getWeeklyFrequency(),
                 weeklyGoal.getFutureGoal().getAvailableTime(),
                 avgHeartRate,
