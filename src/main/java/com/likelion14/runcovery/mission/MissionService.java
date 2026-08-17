@@ -107,6 +107,8 @@ public class MissionService {
                     existing.update(today, aiResult.getRecommendedIntensity(), aiResult.getRecommendedTime(),
                             aiResult.getRecommendedZone(), aiResult.getRecommendedZoneDesc(), aiResult.getDetailComment());
                     existing.setIsRest(aiResult.getIsRest());
+                    existing.setIsCompleted(false);
+                    if(aiResult.getIsRest()) existing.setIsCompleted(true);
                     return existing;
                 })
                 .orElseGet(() -> {
@@ -161,9 +163,9 @@ public class MissionService {
                   - 오늘의 컨디션, 최근 운동 상태, 통증 부위, 피로도 분석을 참고하여 미션에 반영해주세요.
                   - 컨디션 상태를 최우선으로 고려하고, 최근 평균 심박수와 평균 페이스는 체력 수준 파악을 위한 보조 지표로만 활용하세요.
                   - 컨디션이 좋을 때에 한해, 심박수가 낮고 페이스가 빠른 경우 강도를 높여주세요.
-                  - recommendedIntensity는 반드시 "~강도 러닝" 형식으로 끝내주세요. 단, 저강도인 경우 "저강도 러닝 (조깅)" 형식으로 작성해주세요.
+                  - recommendedIntensity는 반드시 "~강도 러닝" 형식으로 끝내주세요.
                   - detailComment는 워밍업/메인/쿨다운 시간 구성만 작성하고, 운동 강도 표현은 포함하지 마세요.
-                  - 컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, 나머지 필드는 "오늘은 휴식을 취하세요."로 채워주세요.
+                  - 컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, 나머지 필드는 모두 "오늘은 휴식을 취하세요."로 채워주세요.
                  
                  [응답 형식]
                  {
