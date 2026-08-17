@@ -167,7 +167,8 @@ public class UserService {
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당 유저가 존재하지 않습니다."));
 
         // 주간 목표 조회
-        WeeklyGoal weeklyGoal = weeklyGoalRepository.findTopByUserOrderByWeekNoDesc(user).orElse(null);
+        WeeklyGoal weeklyGoal = weeklyGoalRepository.findByUserAndCreatedAtBetween(
+                user, start.atStartOfDay(), end.atTime(23, 59, 59)).orElse(null);
         int totalCalories = weeklyGoal != null ? weeklyGoal.getExpectedCalories() : 0;
 
         // 주간 소모 칼로리
