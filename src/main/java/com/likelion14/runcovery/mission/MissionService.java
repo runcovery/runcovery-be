@@ -140,7 +140,7 @@ public class MissionService {
         return MissionResponseDto.from(savedMission);
     }
 
-    public MissionResponseDto.Status getTodayMission(long userId) {
+    public MissionResponseDto getTodayMission(long userId) {
 
         LocalDate today = LocalDate.now();
         LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
@@ -153,7 +153,7 @@ public class MissionService {
                 .orElse(null);
 
         if (condition == null) {
-            return MissionResponseDto.Status.noCondition();
+            throw new CustomException(HttpStatus.NOT_FOUND, "NO_CONDITION | 오늘의 컨디션 분석을 먼저 해주세요.");
         }
 
         Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
@@ -172,13 +172,13 @@ public class MissionService {
                 int totalSchedules = weeklyScheduleRepository.findByWeeklyGoal(weeklyGoal).size();
 
                 if (completedThisWeek >= totalSchedules) {
-                    return MissionResponseDto.Status.weekCompleted();
+                    throw new CustomException(HttpStatus.NOT_FOUND, "WEEK_COMPLETED | 이번주 스케줄을 모두 완료했어요!");
                 }
             }
-            return MissionResponseDto.Status.noMission();
+            throw new CustomException(HttpStatus.NOT_FOUND, "NO_MISSION | 아직 미션이 생성되지 않았어요.");
         }
 
-        return MissionResponseDto.Status.hasMission(MissionResponseDto.from(mission));
+        return MissionResponseDto.from(mission);
     }
 
     private String buildSystemPrompt() {
@@ -195,7 +195,9 @@ public class MissionService {
                   - 컨디션이 좋을 때에 한해, 심박수가 낮고 페이스가 빠른 경우 강도를 높여주세요.
                   - recommendedIntensity는 반드시 "~강도 러닝" 형식으로 끝내주세요.
                   - detailComment는 워밍업/메인/쿨다운 시간 구성만 작성하고, 운동 강도 표현은 포함하지 마세요.
+                  - 컨디션 분석에 "휴식이 필요" 내용이 포함되면 미션을 휴식으로 봔환하세요.
                   - 컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, 나머지 필드는 모두 "오늘은 휴식을 취하세요."로 채워주세요.
+                  - 컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, recommendedIntensity, recommendedTime, recommendedZone, recommendedZoneDesc, detailComment 필드를 모두 반드시 "오늘은 휴식을 취하세요."로 채워주세요. 다른 값은 절대 넣지 마세요.
                  
                  [응답 형식]
                  {

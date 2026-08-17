@@ -28,7 +28,7 @@ public class ActivityService {
 
         ActivityRecord activityRecord = saveOrUpdateActivity(user, request);
 
-        Mission mission = missionRepository.findByMissionDate(request.getRecordDate()).orElse(null);
+        Mission mission = missionRepository.findByConditionUserAndMissionDate(user, request.getRecordDate()).orElse(null);
 
         ActivitySyncResponseDto.MissionInfo missionInfo = null;
         if (mission != null && !mission.getIsRest()) {
@@ -47,7 +47,7 @@ public class ActivityService {
 
         return activityRecordRepository.findByUserAndRecordDate(user, LocalDate.now())
                 .map(ActivityRecordResponseDto::from)
-                .orElse(null);
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 러닝 기록이 없습니다."));
     }
 
     // 운동 기록 단건 조회

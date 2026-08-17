@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,11 +20,11 @@ public class ActivityController {
 
     @Operation(summary = "활동/데이터 동기화")
     @PostMapping("/sync")
-    public ApiResponse<ActivitySyncResponseDto> syncActivity(
+    public ResponseEntity<ApiResponse<ActivitySyncResponseDto>> syncActivity(
             @CurrentUserId Long userId,
             @RequestBody @Valid ActivityRequestDto request) {
-        ActivitySyncResponseDto activity = activityService.syncActivity(userId, request);
-        return ApiResponse.ok(activity);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(activityService.syncActivity(userId, request), HttpStatus.CREATED));
     }
 
     @Operation(summary = "활동/조회")

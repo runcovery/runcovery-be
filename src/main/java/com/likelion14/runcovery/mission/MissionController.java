@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,17 +20,18 @@ public class MissionController {
 
     @Operation(summary = "일일미션 생성")
     @PostMapping("/generate")
-    public ApiResponse<MissionResponseDto> generateMission(
+    public ResponseEntity<ApiResponse<MissionResponseDto>> generateMission(
             @CurrentUserId Long userId,
             @Parameter(example = "37.5665") @RequestParam Double lat,
             @Parameter(example = "126.9780") @RequestParam Double lon
     ) {
-        return ApiResponse.ok(missionService.generateMission(userId, lat, lon));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(missionService.generateMission(userId, lat, lon), HttpStatus.CREATED));
     }
 
     @Operation(summary = "일일미션/조회")
     @GetMapping("/today")
-    public ApiResponse<MissionResponseDto.Status> getTodayMission(@CurrentUserId Long userId) {
+    public ApiResponse<MissionResponseDto> getTodayMission(@CurrentUserId Long userId) {
         return ApiResponse.ok(missionService.getTodayMission(userId));
     }
 }
