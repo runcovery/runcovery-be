@@ -28,7 +28,7 @@ public class MissionController {
 
     @Operation(summary = "일일미션/조회")
     @GetMapping("/today")
-    public ApiResponse<MissionResponseDto.Status> getTodayMission(@CurrentUserId Long userId) {
+    public ApiResponse<MissionResponseDto> getTodayMission(@CurrentUserId Long userId) {
         return ApiResponse.ok(missionService.getTodayMission(userId));
     }
 }

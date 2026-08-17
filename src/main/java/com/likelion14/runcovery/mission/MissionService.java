@@ -140,7 +140,7 @@ public class MissionService {
         return MissionResponseDto.from(savedMission);
     }
 
-    public MissionResponseDto.Status getTodayMission(long userId) {
+    public MissionResponseDto getTodayMission(long userId) {
 
         LocalDate today = LocalDate.now();
         LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
@@ -153,7 +153,7 @@ public class MissionService {
                 .orElse(null);
 
         if (condition == null) {
-            return MissionResponseDto.Status.noCondition();
+            throw new CustomException(HttpStatus.NOT_FOUND, "NO_CONDITION | 오늘의 컨디션 분석을 먼저 해주세요.");
         }
 
         Mission mission = missionRepository.findByConditionAndMissionDate(condition, today)
@@ -172,13 +172,13 @@ public class MissionService {
                 int totalSchedules = weeklyScheduleRepository.findByWeeklyGoal(weeklyGoal).size();
 
                 if (completedThisWeek >= totalSchedules) {
-                    return MissionResponseDto.Status.weekCompleted();
+                    throw new CustomException(HttpStatus.NOT_FOUND, "WEEK_COMPLETED | 이번주 스케줄을 모두 완료했어요!");
                 }
             }
-            return MissionResponseDto.Status.noMission();
+            throw new CustomException(HttpStatus.NOT_FOUND, "NO_MISSION | 아직 미션이 생성되지 않았어요.");
         }
 
-        return MissionResponseDto.Status.hasMission(MissionResponseDto.from(mission));
+        return MissionResponseDto.from(mission);
     }
 
     private String buildSystemPrompt() {
