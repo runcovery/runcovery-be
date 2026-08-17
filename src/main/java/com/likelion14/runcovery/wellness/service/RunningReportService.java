@@ -13,7 +13,6 @@ import com.likelion14.runcovery.user.UserRepository;
 import com.likelion14.runcovery.wellness.dto.ReportRequestDto;
 import com.likelion14.runcovery.wellness.dto.ReportResponseDto;
 import com.likelion14.runcovery.wellness.entity.SkinRecord;
-import com.likelion14.runcovery.wellness.enums.RunningIntensityLevel;
 import com.likelion14.runcovery.wellness.enums.SkinRecordType;
 import com.likelion14.runcovery.wellness.enums.SweatStatus;
 import com.likelion14.runcovery.wellness.repository.SkinRecordQueryRepository;
@@ -47,6 +46,7 @@ public class RunningReportService {
     private final YouTubeVideoSearchService youTubeVideoSearchService;
     private final RecoveryVideoResponseMapper recoveryVideoResponseMapper;
     private final RunningReportPromptFactory runningReportPromptFactory;
+    private final RunningIntensityCalculator runningIntensityCalculator;
     private final RunningReportPersistenceService runningReportPersistenceService;
     private final UserRepository userRepository;
     private final ActivityRecordRepository activityRecordRepository;
@@ -118,6 +118,12 @@ public class RunningReportService {
                 weather,
                 request.getSurvey().getSweat()
         );
+        RunningIntensityCalculator.Assessment intensityAssessment = runningIntensityCalculator.calculate(
+                user,
+                activity,
+                weather,
+                condition
+        );
 
         return new ReportContext(
                 user,
@@ -126,7 +132,8 @@ public class RunningReportService {
                 condition,
                 painfulParts,
                 weather,
-                hydrationEstimate
+                hydrationEstimate,
+                intensityAssessment
         );
     }
 
@@ -220,6 +227,7 @@ public class RunningReportService {
                     verifiedVideos
             );
             validateAndNormalizeAiResponse(response, context.painfulParts(), verifiedVideos);
+            applyCalculatedIntensity(response, context.intensityAssessment());
             return response;
         } catch (CustomException exception) {
             throw exception;
@@ -269,13 +277,6 @@ public class RunningReportService {
             throw new CustomException(HttpStatus.BAD_GATEWAY, "AI 리포트 응답이 비어 있습니다.");
         }
 
-        ReportResponseDto.RunningIntensity intensity = response.getIntensity();
-        if (intensity == null || intensity.getScore() == null
-                || intensity.getScore() < 1 || intensity.getScore() > 10
-                || isBlank(intensity.getComment())) {
-            throw new CustomException(HttpStatus.BAD_GATEWAY, "AI 리포트의 러닝 강도 정보가 올바르지 않습니다.");
-        }
-        intensity.setLevel(RunningIntensityLevel.fromScore(intensity.getScore()).name());
 
         validatePrescription(response.getHydration(), "수분/영양");
         validatePrescription(response.getSkin(), "피부");
@@ -301,6 +302,16 @@ public class RunningReportService {
         response.setUncoveredPainPartCodes(uncoveredCodes);
     }
 
+    private void applyCalculatedIntensity(
+            ReportResponseDto response,
+            RunningIntensityCalculator.Assessment assessment
+    ) {
+        response.setIntensity(ReportResponseDto.RunningIntensity.builder()
+                .score(assessment.score())
+                .level(assessment.level().name())
+                .comment(assessment.comment())
+                .build());
+    }
     private void validatePrescription(ReportResponseDto.Prescription prescription, String label) {
         if (prescription == null || isBlank(prescription.getTitle()) || isBlank(prescription.getSolution())) {
             throw new CustomException(HttpStatus.BAD_GATEWAY, "AI 리포트의 " + label + " 처방이 누락되었습니다.");
@@ -374,7 +385,8 @@ public class RunningReportService {
             Condition condition,
             List<BodyPart> painfulParts,
             WeatherResponseDto weather,
-            HydrationEstimate hydrationEstimate
+            HydrationEstimate hydrationEstimate,
+            RunningIntensityCalculator.Assessment intensityAssessment
     ) {
     }
 
