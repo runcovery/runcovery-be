@@ -20,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -53,8 +54,11 @@ public class MissionService {
         }
 
         // 3. 주간 목표, 스케줄 조회
-        WeeklyGoal weeklyGoal = weeklyGoalRepository.findTopByUserOrderByWeekNoDesc(user)
-                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "주간 목표가 없습니다."));
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
+        WeeklyGoal weeklyGoal = weeklyGoalRepository.findByUserAndCreatedAtBetween(user, startOfWeek.atStartOfDay(), endOfWeek.atTime(23, 59, 59))
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "이번주 주간 목표가 생성되지 않았습니다."));
 
         List<String> schedules = weeklyScheduleRepository.findByWeeklyGoal(weeklyGoal)
                 .stream()
@@ -64,6 +68,19 @@ public class MissionService {
         log.info("주간목표 조회 완료: {}", weeklyGoal.getWeeklyGoal());
         log.info("주간목표 조회 완료: {}", String.join(", ", schedules));
 
+        long completedThisWeek = missionRepository
+                .findByConditionUserAndMissionDateBetweenAndIsCompletedTrue(user, startOfWeek, endOfWeek)
+                .stream()
+                .filter(m -> !m.getIsRest())
+                .count();
+
+        if (completedThisWeek >= schedules.size()) {
+            throw new CustomException(HttpStatus.BAD_REQUEST, "이번주 스케줄을 모두 완료했습니다.");
+        }
+
+        String todaySchedule = schedules.get((int) completedThisWeek);
+        log.info("오늘 스케줄: {}", todaySchedule);
+
         // 4. 현재 날씨 조회
         WeatherResponseDto currentWeather = weatherService.getCurrentWeather(lat, lon);
 
@@ -72,11 +89,23 @@ public class MissionService {
                 .mapToInt(ActivityRecord::getRunningDuration)
                 .max().orElse(0) / 60;
 
+        // 6. 최근 7회 기록 중 평균 페이스, 심박수
+        List<ActivityRecord> recentActivities = activityRecordRepository.findTop7ByUserOrderByRecordDateDesc(user);
+        int avgHeartRate = (int) recentActivities.stream()
+                .mapToInt(ActivityRecord::getAvgHeartRate)
+                .average()
+                .orElse(0);
+
+        int avgPace = (int) recentActivities.stream()
+                .mapToInt(ActivityRecord::getAvgPace)
+                .average()
+                .orElse(0);
+
         // 6. OpenAI에 미션 생성 요청 (주간목표, 주간스케줄, 컨디션, 날씨 전달)
         log.info("OpenAI 요청 시작");
 
         MissionAiResult aiResult = openAiService.getStructuredCompletion(
-                buildSystemPrompt(), buildUserPrompt(user, condition, weeklyGoal, schedules, currentWeather, currentMaxDuration), MissionAiResult.class);
+                buildSystemPrompt(), buildMissionPrompt(user, condition, weeklyGoal, todaySchedule, currentWeather, currentMaxDuration, avgHeartRate, avgPace), MissionAiResult.class);
 
         log.info("OpenAI 응답 완료");
 
@@ -91,6 +120,8 @@ public class MissionService {
                     existing.update(today, aiResult.getRecommendedIntensity(), aiResult.getRecommendedTime(),
                             aiResult.getRecommendedZone(), aiResult.getRecommendedZoneDesc(), aiResult.getDetailComment());
                     existing.setIsRest(aiResult.getIsRest());
+                    existing.setIsCompleted(false);
+                    if(aiResult.getIsRest()) existing.setIsCompleted(true);
                     return existing;
                 })
                 .orElseGet(() -> {
@@ -111,10 +142,12 @@ public class MissionService {
 
     public MissionResponseDto.Status getTodayMission(long userId) {
 
+        LocalDate today = LocalDate.now();
+        LocalDate startOfWeek = today.with(DayOfWeek.MONDAY);
+        LocalDate endOfWeek = today.with(DayOfWeek.SUNDAY);
+
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "해당하는 유저가 없습니다."));
-
-        LocalDate today = LocalDate.now();
 
         Condition condition = conditionRepository.findByUserAndConditionDate(user, today)
                 .orElse(null);
@@ -127,6 +160,21 @@ public class MissionService {
                 .orElse(null);
 
         if (mission == null) {
+            WeeklyGoal weeklyGoal = weeklyGoalRepository.findByUserAndCreatedAtBetween(
+                    user, startOfWeek.atStartOfDay(), endOfWeek.atTime(23, 59, 59)).orElse(null);
+
+            if (weeklyGoal != null) {
+                long completedThisWeek = missionRepository
+                        .findByConditionUserAndMissionDateBetweenAndIsCompletedTrue(user, startOfWeek, endOfWeek)
+                        .stream()
+                        .filter(m -> !m.getIsRest())
+                        .count();
+                int totalSchedules = weeklyScheduleRepository.findByWeeklyGoal(weeklyGoal).size();
+
+                if (completedThisWeek >= totalSchedules) {
+                    return MissionResponseDto.Status.weekCompleted();
+                }
+            }
             return MissionResponseDto.Status.noMission();
         }
 
@@ -135,32 +183,35 @@ public class MissionService {
 
     private String buildSystemPrompt() {
         return """
-                사용자의 컨디션, 날씨, 주간 목표를 고려하여 오늘의 일일 러닝 미션을 생성해주세요.
-                반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트나 마크다운은 포함하지 마세요.
-                
-                [규칙]
-                - "완전히", "절대", "항상" 등 극단적이고 단정적인 표현은 사용하지 마세요.
-                - 권장 운동 시간은 사용자의 1회 운동 가능 시간을 초과하지 않아야 합니다.
-                - 권장 운동 강도와 러닝 존은 주간 목표와 주간 스케줄에 맞게 설정해주세요.
-                - 오늘의 컨디션 최근 운동 상태, 통증 부위, 피로도 분석을 참고하여 미션에 반영해주세요.
-                - detailComment는 워밍업/메인/쿨다운 시간 구성만 작성하고, 운동 강도 표현은 포함하지 마세요.
-                - 컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, 나머지 필드는 "오늘은 휴식을 취하세요."로 채워주세요.
-                
-                [응답 형식]
-                {
-                  "recommendedIntensity": "중·고강도 러닝",
-                  "recommendedTime": "20분 내외로 도전해보세요",
-                  "recommendedZone": "Zone 3~4",
-                  "recommendedZoneDesc": "숨이 약간 찰 정도, 짧은 대답만 가능",
-                  "detailComment": "워밍업(5분)-메인(10분)-쿨다운(5분)",
-                  "isRest": false
-                }
-               """;
+                 사용자의 컨디션, 날씨, 주간 목표를 고려하여 오늘의 일일 러닝 미션을 생성해주세요.
+                 반드시 아래 JSON 형식으로만 응답하세요. 다른 텍스트나 마크다운은 포함하지 마세요.
+                 
+                 [규칙]
+                  - "완전히", "절대", "항상" 등 극단적이고 단정적인 표현은 사용하지 마세요.
+                  - 권장 운동 시간은 사용자의 1회 운동 가능 시간을 초과하지 않아야 합니다.
+                  - 권장 운동 강도와 러닝 존은 주간 목표와 주간 스케줄에 맞게 설정해주세요.
+                  - 오늘의 컨디션, 최근 운동 상태, 통증 부위, 피로도 분석을 참고하여 미션에 반영해주세요.
+                  - 컨디션 상태를 최우선으로 고려하고, 최근 평균 심박수와 평균 페이스는 체력 수준 파악을 위한 보조 지표로만 활용하세요.
+                  - 컨디션이 좋을 때에 한해, 심박수가 낮고 페이스가 빠른 경우 강도를 높여주세요.
+                  - recommendedIntensity는 반드시 "~강도 러닝" 형식으로 끝내주세요.
+                  - detailComment는 워밍업/메인/쿨다운 시간 구성만 작성하고, 운동 강도 표현은 포함하지 마세요.
+                  - 컨디션이 매우 나쁘거나 과도한 피로가 예상되면 isRest를 true로 설정하고, 나머지 필드는 모두 "오늘은 휴식을 취하세요."로 채워주세요.
+                 
+                 [응답 형식]
+                 {
+                   "recommendedIntensity": "중·고강도 러닝",
+                   "recommendedTime": "20분 내외로 도전해보세요",
+                   "recommendedZone": "Zone 3~4",
+                   "recommendedZoneDesc": "숨이 약간 찰 정도, 짧은 대답만 가능",
+                   "detailComment": "워밍업(5분)-메인(10분)-쿨다운(5분)",
+                   "isRest": false
+                 }
+                """;
     }
 
-    private String buildUserPrompt(User user, Condition condition,
-                                   WeeklyGoal weeklyGoal, List<String> schedules, WeatherResponseDto currentWeather,
-                                   int currentMaxDuration) {
+    private String buildMissionPrompt(User user, Condition condition,
+                                   WeeklyGoal weeklyGoal, String todaySchedule, WeatherResponseDto currentWeather,
+                                   int currentMaxDuration, int avgHeartRate, int avgPace) {
         String maxDurationText = currentMaxDuration == 0 ? "기록 없음" : currentMaxDuration + "분";
         return String.format("""
                         사용자 정보: %s, %d세, %.1fkg 최근 최대 러닝 지속 시간: %s
@@ -168,9 +219,11 @@ public class MissionService {
                         수면: %s
                         오늘의 컨디션 분석: %s
                         주간 목표: %s
-                        주간 스케줄: %s
+                        오늘 스케줄: %s
                         주간 운동 가능 횟수: %d회
                         1회 운동 가능 시간: %d분
+                        최근 7일 평균 심박수: %d
+                        최근 7일 평균 페이스: %d
                         현재 날씨: 기온 %.1f°C, 습도 %d%%, 날씨 %s
                          """,
                 user.getGender(),
@@ -181,9 +234,11 @@ public class MissionService {
                 condition.getSleepQuality().getDescription(),
                 condition.getConditionFeedback(),
                 weeklyGoal.getWeeklyGoal(),
-                schedules,
+                todaySchedule,
                 weeklyGoal.getFutureGoal().getWeeklyFrequency(),
                 weeklyGoal.getFutureGoal().getAvailableTime(),
+                avgHeartRate,
+                avgPace,
                 currentWeather.getTemp(),
                 currentWeather.getHumidity(),
                 currentWeather.getWeatherDesc()

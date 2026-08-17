@@ -117,10 +117,11 @@ public class GoalService {
         Optional<WeeklyGoal> previousWeeklyGoal = weeklyGoalRepository.findTopByFutureGoalOrderByWeekNoDesc(futureGoal);
         int weekNo = previousWeeklyGoal.map(WeeklyGoal::getWeekNo).orElse(0) + 1;
         int totalWeeks = futureGoal.getTargetPeriod() * 4;
+        List<ActivityRecord> recentRecords = activityRecordRepository.findTop7ByUserOrderByRecordDateDesc(user);
 
         RecommendedWeeklyGoalDto recommended = openAiService.getStructuredCompletion(
                 buildWeeklyGoalSystemPrompt(futureGoal.getWeeklyFrequency()),
-                buildWeeklyGoalUserPrompt(user, futureGoal, currentMaxDistance, weekNo, totalWeeks, previousWeeklyGoal),
+                buildWeeklyGoalUserPrompt(user, futureGoal, currentMaxDistance, weekNo, totalWeeks, previousWeeklyGoal, recentRecords),
                 RecommendedWeeklyGoalDto.class);
 
         WeeklyGoal savedWeeklyGoal = weeklyGoalRepository.save(new WeeklyGoal(user, futureGoal, weekNo,
@@ -264,6 +265,10 @@ public class GoalService {
         return """
             당신은 러닝 코치입니다. 사용자의 프로필, 최종 목표(선택한 미래 모습과 목표 수치), 최근 러닝 실력,
             그리고 이번이 전체 계획 중 몇 주차인지를 참고하여 이번 주의 주간 러닝 목표와 훈련 스케줄을 생성합니다.
+            - 최근 러닝 기록(페이스·심박·시간)이 제공되면 장식적으로 언급만 하지 말고 실제로 훈련 강도 설계에
+              반영하세요. 예를 들어 최근 평균/최대 심박이 높아지는 추세이거나 페이스가 느려지는 추세라면
+              회복/저강도 훈련 비중을 늘리고, 반대로 안정적이거나 개선되는 추세라면 강도를 점진적으로
+              높이세요. 러닝 기록이 없다면 사용자의 프로필(러닝 경험 등)만으로 무리하지 않게 설계하세요.
             - weeklyGoal: 이번 주에 집중할 목표를 설명하는 한 문장. 완결된 문장으로 작성하고, 사용자가 선택한
               미래의 모습(장면)과 어울리는 톤을 유지하되, 장면 문구를 그대로 반복하지는 마세요.
               단, 사용자가 입력한 목표 거리/목표 기간/주간 횟수/1회 가능 시간 수치를 문장에 그대로
@@ -302,7 +307,8 @@ public class GoalService {
     }
 
     private String buildWeeklyGoalUserPrompt(User user, FutureGoal futureGoal, int currentMaxDistance, int weekNo,
-                                              int totalWeeks, Optional<WeeklyGoal> previousWeeklyGoal) {
+                                              int totalWeeks, Optional<WeeklyGoal> previousWeeklyGoal,
+                                              List<ActivityRecord> recentRecords) {
         int progressPercent = Math.min(100, weekNo * 100 / totalWeeks);
         return """
             다음은 사용자의 프로필입니다:
@@ -321,6 +327,8 @@ public class GoalService {
 
             다음은 사용자의 최근 러닝 실력입니다:
             - 최근 10회 러닝 중 최대 거리: %dkm (0이면 아직 러닝 기록이 없는 상태)
+            - 최근 러닝 기록 상세 (최근순, 최대 7회):
+            %s
 
             목표 기간은 총 약 %d주이며, 이번 주는 그 중 %d주차(전체 기간의 약 %d%%에 해당)입니다.
             weeklyGoalDistance를 주간 운동 목표 횟수(%d회)로 나눈 평균 1회 훈련 거리가 이 진행률에
@@ -334,9 +342,30 @@ public class GoalService {
             """.formatted(user.getNickname(), user.getAge(), user.getGender(), user.getRunningExperience(),
                 user.getHeight(), user.getWeight(),
                 futureGoal.getScene(), futureGoal.getTargetDistance(), futureGoal.getTargetPeriod(),
-                futureGoal.getWeeklyFrequency(), futureGoal.getAvailableTime(), currentMaxDistance, totalWeeks,
+                futureGoal.getWeeklyFrequency(), futureGoal.getAvailableTime(), currentMaxDistance,
+                buildRecentRecordsContext(recentRecords), totalWeeks,
                 weekNo, progressPercent, futureGoal.getWeeklyFrequency(), futureGoal.getTargetDistance(),
                 buildPreviousWeekContext(previousWeeklyGoal), futureGoal.getWeeklyFrequency());
+    }
+
+    private String buildRecentRecordsContext(List<ActivityRecord> recentRecords) {
+        if (recentRecords.isEmpty()) {
+            return "기록 없음";
+        }
+
+        StringBuilder builder = new StringBuilder();
+        for (int index = 0; index < recentRecords.size(); index++) {
+            ActivityRecord record = recentRecords.get(index);
+            if (index > 0) {
+                builder.append("\n");
+            }
+            builder.append("  ").append(index + 1).append(". ").append(record.getRecordDate())
+                    .append(" - 페이스: ").append(record.getAvgPace()).append("초/km")
+                    .append(", 평균심박: ").append(record.getAvgHeartRate()).append("bpm")
+                    .append(", 최대심박: ").append(record.getMaxHeartRate()).append("bpm")
+                    .append(", 시간: ").append(record.getRunningDuration()).append("초");
+        }
+        return builder.toString();
     }
 
     private String buildPreviousWeekContext(Optional<WeeklyGoal> previousWeeklyGoal) {
