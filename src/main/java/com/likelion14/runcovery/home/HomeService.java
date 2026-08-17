@@ -120,6 +120,10 @@ public class HomeService {
 
         if (!prescriptions.isEmpty()) {
             // 처방전 리포트 생성 후
+            boolean allCompleted = prescriptions.stream().allMatch(Prescription::getIsCompleted);
+            if (allCompleted) {
+                return "운동과 회복까지 챙긴 오늘, 내일의 몸이 달라질 거예요.";
+            }
             return openAiService.getTextCompletion(buildSystemPrompt(), buildCompletedMissionPrompt(prescriptions));
         } else if (mission == null) {
             // 미션 생성 전
