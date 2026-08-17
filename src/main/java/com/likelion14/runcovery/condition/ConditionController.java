@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,10 +20,11 @@ public class ConditionController {
 
     @Operation(summary = "컨디션/분석,저장")
     @PostMapping
-    public ApiResponse<ConditionResponseDto> analyzeCondition (
+    public ResponseEntity<ApiResponse<ConditionResponseDto>> analyzeCondition (
             @CurrentUserId Long userId,
             @RequestBody @Valid ConditionRequestDto request) {
-        return ApiResponse.ok(conditionService.analyzeCondition(userId, request));
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.ok(conditionService.analyzeCondition(userId, request), HttpStatus.CREATED));
     }
 
     @Operation(summary = "컨디션/조회")

@@ -47,7 +47,7 @@ public class ActivityService {
 
         return activityRecordRepository.findByUserAndRecordDate(user, LocalDate.now())
                 .map(ActivityRecordResponseDto::from)
-                .orElse(null);
+                .orElseThrow(() -> new CustomException(HttpStatus.NOT_FOUND, "오늘 러닝 기록이 없습니다."));
     }
 
     // 운동 기록 단건 조회
