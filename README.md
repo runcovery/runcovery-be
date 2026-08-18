@@ -38,18 +38,6 @@
 
 ---
 
-
-
-
-
----
-
-
-
-
-
----
-
 ## 🚀 주요 기능
 
 ### 🎯 목표 설정
@@ -117,10 +105,6 @@
 
 ---
 
-
-
----
-
 ## 🏗 시스템 아키텍처
 
 ![RunCovery 시스템 아키텍처](<img width="1741" height="1039" alt="Image" src="https://github.com/user-attachments/assets/184f36db-80b7-410e-a86a-81896d1034d7" />)
@@ -146,12 +130,7 @@
 
 ---
 
-
-
-
 - [runcovery-skin-analysis](https://github.com/runcovery/runcovery-skin-analysis)
-
----
 
 
 ---
