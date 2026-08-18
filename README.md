@@ -125,6 +125,9 @@
 | User / Goal / BodyIssue | [임준기](https://github.com/limjungi) |
 | Mission / Condition / Activity / Home / 마이페이지 | [김소진](https://github.com/JiniiW) |
 | Wellness (피부 스캔 / 리포트 / 처방전) | [김주영](https://github.com/juyoungk1) |
+| FrontEnd | [한종민](https://github.com/jjong0923) |
+| Design | [이은서](https://github.com/eunseo-rizel) |
+| PM | [한현진](https://github.com/hyunwls) |
 
 ---
 
