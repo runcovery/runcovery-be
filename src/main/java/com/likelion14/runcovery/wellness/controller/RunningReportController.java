@@ -32,7 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/wellness/reports")
+@RequestMapping("/wellness/reports")
 @RequiredArgsConstructor
 @Tag(name = "6. Running Report", description = "러닝·컨디션·AFTER_RUN 피부·날씨를 이용한 AI 웰니스 리포트 생성/조회 API")
 public class RunningReportController {
