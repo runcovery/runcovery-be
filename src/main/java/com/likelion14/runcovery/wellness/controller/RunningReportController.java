@@ -3,7 +3,9 @@ package com.likelion14.runcovery.wellness.controller;
 import com.likelion14.runcovery.common.CurrentUserId;
 import com.likelion14.runcovery.wellness.dto.ReportRequestDto;
 import com.likelion14.runcovery.wellness.dto.ReportResponseDto;
+import com.likelion14.runcovery.wellness.dto.RunningReportPreviewResponseDto;
 import com.likelion14.runcovery.wellness.dto.WellnessReportQueryResponseDto;
+import com.likelion14.runcovery.wellness.service.RunningReportPreviewService;
 import com.likelion14.runcovery.wellness.service.RunningReportService;
 import com.likelion14.runcovery.wellness.service.WellnessReportQueryService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -30,13 +32,46 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 
 @RestController
-@RequestMapping("/api/wellness/reports")
+@RequestMapping("/wellness/reports")
 @RequiredArgsConstructor
 @Tag(name = "6. Running Report", description = "러닝·컨디션·AFTER_RUN 피부·날씨를 이용한 AI 웰니스 리포트 생성/조회 API")
 public class RunningReportController {
 
     private final RunningReportService runningReportService;
+    private final RunningReportPreviewService runningReportPreviewService;
     private final WellnessReportQueryService wellnessReportQueryService;
+
+    @Operation(
+            summary = "[6-1] 웰니스 리포트 작성 화면 조회",
+            description = """
+                    현재 사용자가 소유한 activityRecordId의 러닝 기록을 조회합니다.
+                    활동 기록의 startTime과 위도/경도를 기준으로 OpenWeather 과거 날씨를 조회하여
+                    자외선 지수, 기온, 습도와 총 거리, 러닝 시간, 평균 페이스, 케이던스를 함께 반환합니다.
+                    이 응답을 화면에 표시한 뒤 같은 activityRecordId를 리포트 생성 API에 전달합니다.
+                    """
+    )
+    @ApiResponses({
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "리포트 작성 화면 조회 성공",
+                    content = @Content(schema = @Schema(implementation = RunningReportPreviewResponseDto.class))
+            ),
+            @ApiResponse(responseCode = "400", description = "잘못된 activityRecordId 또는 시작 시각·위치 누락"),
+            @ApiResponse(responseCode = "401", description = "X-Public-Id 누락 또는 유효하지 않은 사용자"),
+            @ApiResponse(responseCode = "403", description = "다른 사용자의 러닝 기록 접근"),
+            @ApiResponse(responseCode = "404", description = "러닝 기록을 찾을 수 없음"),
+            @ApiResponse(responseCode = "502", description = "OpenWeather 연결 또는 응답 오류"),
+            @ApiResponse(responseCode = "503", description = "OpenWeather API Key 미설정"),
+            @ApiResponse(responseCode = "504", description = "OpenWeather 응답 시간 초과")
+    })
+    @GetMapping(value = "/preview", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<RunningReportPreviewResponseDto> getReportPreview(
+            @CurrentUserId Long userId,
+            @Parameter(description = "화면에 표시할 사용자 소유 러닝 기록 ID", required = true, example = "14")
+            @RequestParam Long activityRecordId
+    ) {
+        return ResponseEntity.ok(runningReportPreviewService.getPreview(userId, activityRecordId));
+    }
 
     @Operation(
             summary = "[7] 맞춤형 웰니스 러닝 리포트 생성 및 저장",
