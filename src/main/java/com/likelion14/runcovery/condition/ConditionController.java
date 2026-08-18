@@ -18,7 +18,13 @@ public class ConditionController {
 
     private final ConditionService conditionService;
 
-    @Operation(summary = "컨디션/분석,저장")
+    @Operation(
+            summary = "컨디션/분석,저장",
+            description = """
+                    bodyCondition : EXHAUSTED / FAIR / GOOD \n
+                    sleepQuality : POOR / FAIR / GOOD
+                    """
+    )
     @PostMapping
     public ResponseEntity<ApiResponse<ConditionResponseDto>> analyzeCondition (
             @CurrentUserId Long userId,
