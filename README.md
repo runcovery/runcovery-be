@@ -120,12 +120,11 @@
 
 ## 👥 Team
 
-| 역할 | 담당 |
+| 도메인 | 담당 |
 |---|---|
-| Backend | RunCovery Backend Team |
-| Frontend | RunCovery Frontend Team |
-| AI·피부 분석 | RunCovery AI Team |
-| Design | RunCovery Design Team |
+| User / Goal / BodyIssue | [임준기](https://github.com/limjungi) |
+| Mission / Condition / Activity / Home / 마이페이지 | [김소진](https://github.com/JiniiW) |
+| Wellness (피부 스캔 / 리포트 / 처방전) | [김주영](https://github.com/juyoungk1) |
 
 ---
 
