@@ -1,7 +1,8 @@
 <div align="center">
 
+<img width="470" height="467" alt="달리는 캐릭터" src="https://github.com/user-attachments/assets/1583626d-81f0-427c-8737-87ac77f6659a" />
 
-# <img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/0ba3bbcc-3c90-414c-a88b-e518dc644968" />RunCovery
+# RunCovery
 
 ### 러닝 기록을 넘어, 회복까지 관리하는 AI 웰니스 러닝 코치
 
