@@ -1,4 +1,3 @@
-<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/e17143ad-ea04-43e3-a0a2-797b24bb2d4a" />
 <div align="center">
 
 # 🏃 RunCovery
@@ -108,7 +107,7 @@
 
 ## 🏗 시스템 아키텍처
 
-![RunCovery 시스템 아키텍처](<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/0a2433c2-386c-4616-8252-31d742e10a02" />)
+![RunCovery 시스템 아키텍처](<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/e17143ad-ea04-43e3-a0a2-797b24bb2d4a" />)
 
 
 
@@ -134,17 +133,6 @@
 - [runcovery-skin-analysis](https://github.com/runcovery/runcovery-skin-analysis)
 
 
----
-
-## 💼 비즈니스 확장 방향
-
-### AAC 제품·프로그램 연계
-
-웰니스 처방전에서 사용자에게 필요한 수분, 피부, 스트레칭 관련 제품과 프로그램을 추천하고 실제 구매 또는 서비스 이용으로 연결합니다.
-
-### 오프라인 러닝 스테이션
-
-러닝크루 거점, 팝업 스토어, 행사장 등에 피부 분석 기술을 제공해 러닝 후 개인 맞춤 웰니스 경험을 제공합니다.
 
 ---
 
