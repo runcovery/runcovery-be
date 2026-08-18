@@ -1,3 +1,4 @@
+<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/e17143ad-ea04-43e3-a0a2-797b24bb2d4a" />
 <div align="center">
 
 # 🏃 RunCovery
@@ -107,7 +108,7 @@
 
 ## 🏗 시스템 아키텍처
 
-![RunCovery 시스템 아키텍처](<img width="1741" height="1039" alt="Image" src="https://github.com/user-attachments/assets/184f36db-80b7-410e-a86a-81896d1034d7" />)
+![RunCovery 시스템 아키텍처](<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/0a2433c2-386c-4616-8252-31d742e10a02" />)
 
 
 
