@@ -107,7 +107,8 @@
 
 ## 🏗 시스템 아키텍처
 
-![RunCovery 시스템 아키텍처](<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/e17143ad-ea04-43e3-a0a2-797b24bb2d4a" />)
+![RunCovery 시스템 아키텍처
+<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/e17143ad-ea04-43e3-a0a2-797b24bb2d4a" />
 
 
 
