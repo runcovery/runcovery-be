@@ -107,29 +107,10 @@
 
 ## 🏗 시스템 아키텍처
 
-![RunCovery 시스템 아키텍처
+![RunCovery 시스템 아키텍처]
 <img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/e17143ad-ea04-43e3-a0a2-797b24bb2d4a" />
 
 
-
-### 서버 구성
-
-가비아 클라우드 서버 한 대에서 다음 서비스를 실행합니다.
-
-| 서비스 | 포트 | 역할 |
-|---|---:|---|
-| Nginx | 80 | 외부 API 요청 수신 및 Reverse Proxy |
-| Spring Boot | 8080 | RunCovery 백엔드 API |
-| MariaDB | 3306 | 서비스 데이터 저장 |
-| FastAPI | 8000 | 이미지 기반 피부 상태 분석 |
-
-- 운영체제: Ubuntu 22.04
-- 서버 사양: 2vCore / 4GB
-- Spring Boot와 FastAPI는 systemd 서비스로 관리
-- MariaDB와 FastAPI는 동일 서버 내부에서 통신
-- HTTPS는 추후 적용 예정
-
----
 
 - [runcovery-skin-analysis](https://github.com/runcovery/runcovery-skin-analysis)
 
