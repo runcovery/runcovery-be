@@ -1,10 +1,12 @@
 <div align="center">
 
-<img width="470" height="467" alt="달리는 캐릭터" src="https://github.com/user-attachments/assets/1583626d-81f0-427c-8737-87ac77f6659a" />
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/1583626d-81f0-427c-8737-87ac77f6659a" width="100" alt="달리는 캐릭터">
 
-# RunCovery
+  # RunCovery
 
-### 러닝 기록을 넘어, 회복까지 관리하는 AI 웰니스 러닝 코치
+  러닝 기록을 넘어, 회복까지 관리하는 AI 웰니스 러닝 코치
+</div>
 
 프로필·목표·러닝 기록·날씨·컨디션·피부 상태를 종합해  
 사용자에게 필요한 운동 계획과 맞춤형 사후 관리 처방전을 제공합니다.
