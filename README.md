@@ -1,6 +1,7 @@
 <div align="center">
 
-# 🏃 RunCovery
+
+# <img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/0ba3bbcc-3c90-414c-a88b-e518dc644968" />RunCovery
 
 ### 러닝 기록을 넘어, 회복까지 관리하는 AI 웰니스 러닝 코치
 
@@ -120,7 +121,7 @@
 
 ## 👥 Team
 
-| 도메인 | 담당 |
+| 역할 | 담당 |
 |---|---|
 | User / Goal / BodyIssue | [임준기](https://github.com/limjungi) |
 | Mission / Condition / Activity / Home / 마이페이지 | [김소진](https://github.com/JiniiW) |
