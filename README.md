@@ -1,122 +1,144 @@
-# RunCovery
+<div align="center">
 
-러닝을 시작하기 막막한 사람을 위한 AI 웰니스 러닝 코치 서비스입니다. 프로필과 목표를 입력하면 AI가 미래 목표 장면과 주간·일일 훈련 계획을 짜주고, 러닝이 끝나면 그날의 컨디션·피부 상태·날씨까지 종합해 맞춤 리포트와 처방전을 내려줍니다.
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/1583626d-81f0-427c-8737-87ac77f6659a" width="100" alt="달리는 캐릭터">
 
-## 기획 배경
+  # RunCovery
 
-러닝 인구 1000만 시대지만, 나이키런클럽처럼 기존 러닝 앱은 거리·시간·페이스·칼로리 같은 "기록"에만 집중하고 러닝 후 관리는 온전히 사용자 몫으로 남아 있습니다. 문제는 관리의 필요성을 모르는 게 아니라 **오늘의 나에게 무엇이 필요한지 모른다는 것**입니다 — 땀을 많이 흘렸으면 수분을 얼마나 보충해야 하는지, 다리가 뻐근하면 쉬어야 하는지 스트레칭을 해야 하는지, 잠을 적게 잤으면 오늘 강도를 낮춰야 하는지 판단할 기준이 없습니다.
+  러닝 기록을 넘어, 회복까지 관리하는 AI 웰니스 러닝 코치
+</div>
 
-RunCovery는 러닝 전후 관리까지 연결된 경험을 제공합니다. 러닝 데이터·컨디션·피부 스캔을 바탕으로 AI가 수분/영양 보충, 피부 케어, 수면 케어를 그날그날 개인화해 처방합니다.
+프로필·목표·러닝 기록·날씨·컨디션·피부 상태를 종합해  
+사용자에게 필요한 운동 계획과 맞춤형 사후 관리 처방전을 제공합니다.
 
-## 사용자 흐름
+<br/>
 
-1. **데이터 수집** — 나이, 성별, 키, 몸무게, 운동 경험, 러닝 목표 입력
-2. **오늘의 컨디션 체크** — 수면 시간, 몸 상태, 통증 여부, 피로도로 오늘의 러닝 계획 조정
-3. **AI 러닝 플랜 생성** — 목표 기간과 현재 운동 수준을 분석해 개인 맞춤 계획 생성
-4. **사후 관리** — 러닝 종료 후 피부 스캔, 피로도, 땀 분비, 통증 부위, 운동 만족도 입력
-5. **회복 리포트 제공** — 피부 관리·수분/영양 섭취·수면 추천·통증 관리 영상 등 맞춤 처방전 제공
+![Java](https://img.shields.io/badge/Java-21-007396?style=flat-square&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.1.0-6DB33F?style=flat-square&logo=springboot&logoColor=white)
+![MariaDB](https://img.shields.io/badge/MariaDB-10.6-003545?style=flat-square&logo=mariadb&logoColor=white)
+![OpenAI](https://img.shields.io/badge/OpenAI-API-412991?style=flat-square&logo=openai&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-CI%2FCD-2088FF?style=flat-square&logo=githubactions&logoColor=white)
 
-## 비즈니스 모델 (확장 계획)
+</div>
 
-현재 기능 범위는 아니지만, 러닝·컨디션 데이터를 분석하는 AI 개인화 엔진을 기반으로 다음과 같은 확장을 그리고 있습니다.
+---
 
-- **AAC 자사 제품·프로그램 크로스셀링**: 웰니스 처방전 안에서 사용자에게 필요한 AAC 수분/피부/스트레칭 제품·프로그램을 추천해 구매로 연결
-- **오프라인 러닝 스테이션 기술 지원**: 러닝 후 피부 분석 기술을 오프라인 러닝 스테이션(팝업, 러닝크루 거점 등)에 기술 지원 형태로 제공
+## 📌 프로젝트 소개
 
-러닝을 새로운 고객 접점으로 삼아, AI 개인화 웰니스 경험과 AAC의 기존 사업을 연결하는 것이 목표입니다.
+기존 러닝 서비스는 거리, 시간, 페이스, 칼로리와 같은 러닝 기록에 집중합니다.  
+하지만 운동 후 수분 보충, 피부 관리, 통증 부위 스트레칭과 같은 회복 관리는 대부분 사용자의 몫으로 남아 있습니다.
 
-## 주요 기능
+사용자는 관리가 필요하다는 사실은 알지만 다음과 같은 내용을 정확히 판단하기 어렵습니다.
 
-**목표 설정**
-- 프로필/계획 기반 미래 목표 장면 AI 추천, 목표 수치 추천
-- 주간 목표 자동 생성(최근 7회 러닝 기록 반영) 및 갱신
+- 오늘 운동 강도가 내 컨디션에 적절했는지
+- 땀을 흘린 만큼 수분과 영양을 어떻게 보충해야 하는지
+- 운동 후 피부 상태에 어떤 관리가 필요한지
+- 통증이 있는 부위를 어떻게 스트레칭해야 하는지
+- 수면과 몸 상태를 고려했을 때 휴식이 필요한지
 
-**일일 루틴**
-- 오늘의 컨디션 체크 및 AI 분석
-- 날씨·컨디션·주간목표 기반 일일 미션 AI 생성
-- 러닝 데이터 동기화 시 오늘 미션 자동 완료 처리
-- 통증 부위 기록/조회
+**RunCovery**는 러닝 전 계획부터 운동 후 회복까지 하나의 흐름으로 연결합니다.
 
-**웰니스**
-- AFTER_RUN / AFTER_CARE 피부 스캔 및 날짜별 기록 조회
-- 전날 대비 AFTER_CARE 피부 점수 비교
-- 러닝·날씨·피부·컨디션·설문 기반 AI 웰니스 리포트 생성
-- 리포트 기반 수분/피부/스트레칭 처방전 및 통증 부위 기반 YouTube 회복 영상 추천
-- 처방전 완료 상태 관리
+러닝 기록, 날씨, 수면 상태, 몸 상태, 피부 스캔, 운동 후 설문을 AI가 종합적으로 분석해 사용자에게 맞춤형 웰니스 리포트와 처방전을 제공합니다.
 
-**마이페이지 / 홈**
-- 주간 활동 통계, 사후관리 달성률, 이번달 피부 점수 그래프
-- 홈 화면 목표 달성률 및 AI 웰니스 팁
+---
 
-## 기술 스택
+## 🚀 주요 기능
 
-| 영역 | 사용 기술 |
-|---|---|
-| Backend | Spring Boot 4.1, Java 21, Spring Data JPA |
-| DB | MariaDB |
-| AI | Spring AI + OpenAI (목표·미션·컨디션·웰니스 리포트 생성, 홈/마이페이지 AI 피드백) |
-| 얼굴/피부 분석 | FastAPI + OpenCV + MediaPipe ([runcovery-skin-analysis](https://github.com/runcovery/runcovery-skin-analysis), 별도 저장소) |
-| 외부 API | OpenWeather(날씨), YouTube Data API(회복 영상) |
-| API 문서 | springdoc-openapi (Swagger UI) |
-| 배포 | 가비아 클라우드 (Ubuntu 22.04, 2vCore/4GB) |
-| CI/CD | GitHub Actions (main push 시 자동 배포) |
+### 🎯 목표 설정
 
-## 아키텍처
+- 사용자 프로필과 운동 경험을 기반으로 목표 추천
+- 미래 목표 장면 AI 생성
+- 최근 러닝 기록을 반영한 주간 목표 생성
+- 주간 목표 달성 현황 조회 및 갱신
 
-서버 1대(가비아 클라우드) 안에 Spring Boot·MariaDB·FastAPI 3개 서비스가 systemd로 함께 떠 있는 구조입니다. 외부에는 22(SSH)·8080(API)만 열려 있고, DB(3306)와 얼굴분석 서버(8000)는 서버 내부(`127.0.0.1`)에서만 접근 가능합니다.
+### 📅 일일 루틴
 
-```mermaid
-flowchart LR
-    subgraph client["클라이언트"]
-        rn["클라이언트 앱"]
-        sw["Swagger / 브라우저"]
-    end
+- 수면 상태와 몸 상태를 포함한 오늘의 컨디션 기록
+- 날씨·컨디션·주간 목표 기반 일일 미션 생성
+- 러닝 데이터 동기화 시 미션 자동 완료
+- 통증 부위 기록 및 조회
 
-    subgraph gh["GitHub"]
-        repo["runcovery-be\nmain 브랜치"]
-        actions["GitHub Actions\nCI/CD"]
-    end
+### 🏃 러닝 활동
 
-    subgraph server["가비아 클라우드 서버 — Ubuntu, 2vCore/4GB, 공인 IP 1개"]
-        spring["Spring Boot :8080\nruncovery.service"]
-        db[("MariaDB :3306\nmariadb.service")]
-        skin["FastAPI :8000\nskin-analysis.service"]
-        spring --> db
-        spring --> skin
-    end
+- 러닝 시간, 거리, 평균 페이스, 케이던스 저장
+- 평균 심박수 및 최대 심박수 기록
+- 러닝 시작·종료 시간 및 위치 정보 관리
+- 러닝 당시 날씨 조회
+- 리포트 작성 전 러닝·날씨 데이터 미리보기
 
-    subgraph ext["외부 API"]
-        openai["OpenAI"]
-        weather["OpenWeather"]
-        youtube["YouTube Data API"]
-    end
+### 🧴 피부 스캔
 
-    rn -- "HTTP :8080\nX-Public-Id 헤더" --> spring
-    sw -- "HTTP :8080" --> spring
-    repo -- "push to main" --> actions
-    actions -- "SSH 접속\ngit pull + rebuild + restart" --> spring
-    spring --> openai
-    spring --> weather
-    spring --> youtube
-```
+- 운동 직후 `AFTER_RUN` 피부 스캔
+- 관리 후 `AFTER_CARE` 피부 스캔
+- 날짜별 피부 기록 조회
+- 홍조, 유분, 피부결, 모공, 잡티, 보습, 색소침착 분석
+- 전날 대비 `AFTER_CARE` 피부 점수 비교
+- Python 피부 분석 서버와 이미지 기반 분석 연동
 
-**공개 vs 내부 전용**
+### 📊 AI 웰니스 리포트
 
-| 구분 | 포트 | 설명 |
-|---|---|---|
-| 외부에 열림 (보안그룹 + ufw) | 22 (SSH), 8080 (Spring Boot) | 인터넷에서 접근 가능한 포트는 이 두 개뿐 |
-| 서버 내부에서만 접근 (`127.0.0.1`) | 3306 (MariaDB), 8000 (FastAPI) | Spring Boot가 같은 서버 안에서 localhost로만 호출, 외부 포트는 열지 않음 |
+다음 데이터를 통합해 맞춤형 리포트를 생성합니다.
 
-> 단일 서버 구조: 지금은 편의상 서버 한 대에 API·DB·얼굴분석을 모두 몰아넣은 상태라, 이 서버가 죽으면 세 서비스가 같이 죽습니다. 트래픽이 늘어나면 DB나 FastAPI를 별도 서버로 분리하는 걸 고려할 것.
+- 러닝 거리, 시간, 페이스, 케이던스
+- 평균 심박수 및 최대 심박수
+- 러닝 당시 온도, 습도, 자외선 정보
+- 수면 상태 및 몸 상태
+- `AFTER_RUN` 피부 점수
+- 운동 만족도, 에너지, 땀 설문
+- 사용자가 선택한 통증 부위
 
-## 배포
 
-가비아 클라우드 서버에 `main` 브랜치 기준으로 배포되며, `main`에 push되면 GitHub Actions가 자동으로 서버에 접속해 최신 코드를 반영합니다. 배포 서버 주소는 팀 내부에서 별도 공유합니다.
 
-## 팀
+### 💊 맞춤형 웰니스 처방전
 
-| 도메인 | 담당 |
+- 수분 및 영양 보충 솔루션
+- 운동 후 피부 관리 솔루션
+- 통증 부위 기반 스트레칭 솔루션
+- YouTube Data API를 활용한 회복 영상 추천
+- 상체와 하체 통증 그룹에 따른 영상 추천
+- 피부·스트레칭 처방전 완료 상태 관리
+- 카테고리별 처방전 목록 및 상세 조회
+
+### 🏠 홈 및 마이페이지
+
+- 주간 활동 통계
+- 목표 달성률 조회
+- 사후 관리 달성률 조회
+- 월간 피부 점수 그래프
+- 사용자 데이터 기반 AI 웰니스 피드백
+
+---
+
+## 🏗 시스템 아키텍처
+
+[RunCovery 시스템 아키텍처]
+<img width="1741" height="1039" alt="runcovery_system_architecture" src="https://github.com/user-attachments/assets/e17143ad-ea04-43e3-a0a2-797b24bb2d4a" />
+
+
+
+- [runcovery-skin-analysis](https://github.com/runcovery/runcovery-skin-analysis)
+
+
+
+---
+
+## 👥 Team
+
+| 역할 | 담당 |
 |---|---|
 | User / Goal / BodyIssue | [임준기](https://github.com/limjungi) |
 | Mission / Condition / Activity / Home / 마이페이지 | [김소진](https://github.com/JiniiW) |
 | Wellness (피부 스캔 / 리포트 / 처방전) | [김주영](https://github.com/juyoungk1) |
+| FrontEnd | [한종민](https://github.com/jjong0923) |
+| Design | [이은서](https://github.com/eunseo-rizel) |
+| PM | [한현진](https://github.com/hyunwls) |
+
+---
+
+<div align="center">
+
+### Run Better. Recover Smarter.
+
+러닝이 끝난 순간부터, 진짜 회복이 시작됩니다.
+
+</div>
